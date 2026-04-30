@@ -21,10 +21,15 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-type Result = {
+type Variant = {
   descriptor: string;
   imagePrompt: string;
   imageUrl: string;
+};
+
+type Result = {
+  optionB: Variant;
+  optionC: Variant;
 };
 
 function Index() {
@@ -58,14 +63,14 @@ function Index() {
 
   const steps = [
     { n: 1, label: "User input" },
-    { n: 2, label: "Sanitize" },
+    { n: 2, label: "Sanitize (B + C)" },
     { n: 3, label: "Send to Nano Banana" },
-    { n: 4, label: "Return image" },
+    { n: 4, label: "Return images" },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-6 py-16">
+      <div className="mx-auto max-w-5xl px-6 py-16">
         <header className="mb-10">
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Sprite Forge
@@ -75,7 +80,7 @@ function Index() {
           </h1>
           <p className="mt-3 text-muted-foreground">
             Type anything — names, characters, brands. We sanitize it into an original
-            descriptor, then generate a clean game sprite.
+            descriptor, then generate two sprite variants: Balanced (B) and Max Likeness (C).
           </p>
         </header>
 
@@ -106,7 +111,7 @@ function Index() {
             </div>
 
             <Button type="submit" disabled={loading || !input.trim()} className="w-full">
-              {loading ? "Generating..." : "Generate sprite"}
+              {loading ? "Generating..." : "Generate sprites"}
             </Button>
           </form>
         </Card>
@@ -150,43 +155,77 @@ function Index() {
         )}
 
         {result && (
-          <div className="mt-8 space-y-6">
-            <Card className="overflow-hidden p-0">
-              <div className="flex items-center justify-center bg-white p-4">
-                <img
-                  src={result.imageUrl}
-                  alt="Generated sprite"
-                  className="max-h-[420px] w-auto"
-                />
-              </div>
-            </Card>
-
-            <Card className="p-5">
-              <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-                Sanitized descriptor
-              </p>
-              <p className="text-sm">{result.descriptor}</p>
-            </Card>
-
-            <Card className="p-5">
-              <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-                Final image prompt
-              </p>
-              <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
-                {result.imagePrompt}
-              </pre>
-            </Card>
-
-            <a
-              href={result.imageUrl}
-              download="sprite.png"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Download PNG
-            </a>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <VariantCard
+              title="Option B — Balanced"
+              subtitle="High likeness, still safe"
+              variant={result.optionB}
+              filename="sprite-option-b.png"
+            />
+            <VariantCard
+              title="Option C — Max Likeness"
+              subtitle="Aggressive caricature / satire"
+              variant={result.optionC}
+              filename="sprite-option-c.png"
+            />
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function VariantCard({
+  title,
+  subtitle,
+  variant,
+  filename,
+}: {
+  title: string;
+  subtitle: string;
+  variant: Variant;
+  filename: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+      </div>
+
+      <Card className="overflow-hidden p-0">
+        <div className="flex items-center justify-center bg-white p-4">
+          <img
+            src={variant.imageUrl}
+            alt={`${title} sprite`}
+            className="max-h-[360px] w-auto"
+          />
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+          Sanitized descriptor
+        </p>
+        <p className="text-sm">{variant.descriptor}</p>
+      </Card>
+
+      <Card className="p-4">
+        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+          Final image prompt
+        </p>
+        <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
+          {variant.imagePrompt}
+        </pre>
+      </Card>
+
+      <a
+        href={variant.imageUrl}
+        download={filename}
+        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        Download PNG
+      </a>
     </div>
   );
 }
