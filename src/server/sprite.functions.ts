@@ -171,25 +171,41 @@ ${subjectRule}`;
 }
 
 async function sanitize(apiKey: string, system: string, input: string): Promise<string> {
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: input },
-      ],
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Sanitize failed [${res.status}]: ${text}`);
+  const maxAttempts = 3;
+  let lastErr = "";
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: input },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      if (res.status === 429 || res.status === 402) {
+        throw new Error(`Sanitize failed [${res.status}]: ${text}`);
+      }
+      lastErr = `HTTP ${res.status}: ${text}`;
+      console.warn(`sanitize attempt ${attempt} failed: ${lastErr}`);
+      await new Promise((r) => setTimeout(r, 700 * attempt));
+      continue;
+    }
+
+    const json = await res.json();
+    const descriptor: string = json.choices?.[0]?.message?.content?.trim() ?? "";
+    if (descriptor) return descriptor;
+    lastErr = "empty descriptor";
+    await new Promise((r) => setTimeout(r, 700 * attempt));
   }
-  const json = await res.json();
-  const descriptor: string = json.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!descriptor) throw new Error("Empty sanitized descriptor");
-  return descriptor;
+
+  throw new Error(`Sanitize failed after ${maxAttempts} attempts. Last: ${lastErr}`);
 }
 
 async function generateImage(
