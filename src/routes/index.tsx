@@ -34,23 +34,44 @@ type Result = {
 };
 
 function Index() {
+  const [mode, setMode] = useState<"text" | "image">("text");
   const [input, setInput] = useState("");
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [isHuman, setIsHuman] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setError("Image must be under 8MB");
+      return;
+    }
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = () => setReferenceImage(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if (loading) return;
+    if (mode === "text" && !input.trim()) return;
+    if (mode === "image" && !referenceImage) return;
     setLoading(true);
     setError(null);
     setResult(null);
     setStep(1);
     try {
       setStep(2);
-      const res = await generateSprite({ data: { input: input.trim(), isHuman } });
+      const payload =
+        mode === "image"
+          ? { referenceImage: referenceImage!, isHuman }
+          : { input: input.trim(), isHuman };
+      const res = await generateSprite({ data: payload });
       setStep(3);
       setResult(res);
       setStep(4);
@@ -63,11 +84,12 @@ function Index() {
   }
 
   const steps = [
-    { n: 1, label: "User input" },
-    { n: 2, label: "Sanitize (B + C)" },
+    { n: 1, label: mode === "image" ? "Upload image" : "User input" },
+    { n: 2, label: mode === "image" ? "Prepare prompts" : "Sanitize (B + C)" },
     { n: 3, label: "Send to Nano Banana" },
     { n: 4, label: "Return images" },
   ];
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
