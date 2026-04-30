@@ -109,17 +109,78 @@ function Index() {
 
         <Card className="p-6">
           <form onSubmit={handleGenerate} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="input">Your idea</Label>
-              <Input
-                id="input"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="e.g. wolverine, big bird, donald trump..."
-                maxLength={200}
+            <div className="flex gap-2 rounded-md border border-border p-1">
+              <button
+                type="button"
+                onClick={() => setMode("text")}
                 disabled={loading}
-              />
+                className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                  mode === "text"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                Text prompt
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("image")}
+                disabled={loading}
+                className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                  mode === "image"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                Upload image
+              </button>
             </div>
+
+            {mode === "text" ? (
+              <div className="space-y-2">
+                <Label htmlFor="input">Your idea</Label>
+                <Input
+                  id="input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="e.g. wolverine, big bird, donald trump..."
+                  maxLength={200}
+                  disabled={loading}
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="file">Reference image</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleFileChange}
+                  disabled={loading}
+                />
+                {referenceImage && (
+                  <div className="mt-2 flex items-center gap-3 rounded-md border border-border p-3">
+                    <img
+                      src={referenceImage}
+                      alt="Reference"
+                      className="h-20 w-20 rounded object-cover"
+                    />
+                    <div className="flex-1 text-xs text-muted-foreground">
+                      We'll send this image to Nano Banana and ask it to redraw
+                      the subject as a 2D arcade sprite (B + C variants).
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReferenceImage(null)}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      disabled={loading}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-between rounded-md border border-border p-3">
               <div>
@@ -133,7 +194,14 @@ function Index() {
               <Switch id="human" checked={isHuman} onCheckedChange={setIsHuman} disabled={loading} />
             </div>
 
-            <Button type="submit" disabled={loading || !input.trim()} className="w-full">
+            <Button
+              type="submit"
+              disabled={
+                loading ||
+                (mode === "text" ? !input.trim() : !referenceImage)
+              }
+              className="w-full"
+            >
               {loading ? "Generating..." : "Generate sprites"}
             </Button>
           </form>
