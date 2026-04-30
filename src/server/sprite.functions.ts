@@ -192,13 +192,23 @@ async function sanitize(apiKey: string, system: string, input: string): Promise<
   return descriptor;
 }
 
-async function generateImage(apiKey: string, prompt: string): Promise<string> {
+async function generateImage(
+  apiKey: string,
+  prompt: string,
+  referenceImage?: string,
+): Promise<string> {
+  const userContent = referenceImage
+    ? [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: referenceImage } },
+      ]
+    : prompt;
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash-image",
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: userContent }],
       modalities: ["image", "text"],
     }),
   });
