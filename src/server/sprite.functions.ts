@@ -16,20 +16,43 @@ RULES:
 Return ONLY the sanitized descriptor as a single sentence. No explanations, no quotes, no labels.`;
 
 function buildImagePrompt(descriptor: string, isHuman: boolean) {
-  const subjectRules = isHuman
-    ? `SUBJECT RULES (HUMAN): Head and shoulders only. Slight right-facing angle. Large expressive face. Fill frame 90-95%.`
-    : `SUBJECT RULES (NON-HUMAN): Side profile facing right. Compact, floating body shape. Avoid thin limbs or complex detail.`;
+  const subjectRule = isHuman
+    ? `HUMAN SUBJECT RULE:
+- Generate head and upper shoulders only
+- Face should occupy 75–85% of canvas height
+- Emphasize hair shape, face shape, expression, and clothing cues
+- Do not generate a full body`
+    : `NON-HUMAN SUBJECT RULE:
+- Use a compact side-facing sprite suitable for a Flappy-style game
+- Fill 90–95% of the canvas`;
 
-  return `Create a single original 2D game sprite using this description: "${descriptor}".
+  return `Create a satirical 2D arcade sprite based on this sanitized character archetype:
 
-STRICT REQUIREMENTS:
-- ORIGINALITY: Must be fully original and not resemble any specific real person or copyrighted character. Only evoke a general archetype.
-- STYLE: Simple, playful, mobile arcade aesthetic. Flat colors, bold outlines, minimal shading. Rounded, chunky proportions. Clean silhouette readable at small sizes.
-- COMPOSITION: Solid white background (RGB 255,255,255). Subject centered. Subject fills 90-95% of canvas with 2-5% padding. No cropping. No shadows, no background elements.
-- BOUNDING BOX: The subject MUST visually touch an invisible bounding box inset 10px from each edge of the canvas. The subject's silhouette must extend to and contact all four sides of this inset box (top, bottom, left, right).
-- SIZE ENFORCEMENT: If the subject does not fill at least 90% of the canvas, regenerate. Do not produce small or floating-in-space subjects under any circumstances.
-- ${subjectRules}
-- OUTPUT: Clean sprite ready for atlas use. No text, watermark, or borders.`;
+"${descriptor}"
+
+GOAL:
+- Make the character immediately recognizable as the intended public archetype through exaggerated visual cues
+- Use caricature exaggeration, not realism
+- Preserve the most iconic public-facing traits from the descriptor
+- Do not include names, logos, brand marks, slogans, or copyrighted symbols
+
+STYLE:
+- Bold cartoon caricature
+- Flat vector game art
+- Thick black outline
+- Simple shapes
+- High readability at small size
+- Minimal shading; no gradients
+
+FRAMING:
+- Canvas: 424 × 331 px
+- Pure white background #FFFFFF
+- Subject fills 90–95% of the canvas
+- Subject should touch an invisible bounding box inset 10 px from each edge
+- No cropping
+- No border, no watermark, no text
+
+${subjectRule}`;
 }
 
 export const generateSprite = createServerFn({ method: "POST" })
