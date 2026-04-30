@@ -26,6 +26,8 @@ STRICT REQUIREMENTS:
 - ORIGINALITY: Must be fully original and not resemble any specific real person or copyrighted character. Only evoke a general archetype.
 - STYLE: Simple, playful, mobile arcade aesthetic. Flat colors, bold outlines, minimal shading. Rounded, chunky proportions. Clean silhouette readable at small sizes.
 - COMPOSITION: Solid white background (RGB 255,255,255). Subject centered. Subject fills 90-95% of canvas with 2-5% padding. No cropping. No shadows, no background elements.
+- BOUNDING BOX: The subject MUST visually touch an invisible bounding box inset 10px from each edge of the canvas. The subject's silhouette must extend to and contact all four sides of this inset box (top, bottom, left, right).
+- SIZE ENFORCEMENT: If the subject does not fill at least 90% of the canvas, regenerate. Do not produce small or floating-in-space subjects under any circumstances.
 - ${subjectRules}
 - OUTPUT: Clean sprite ready for atlas use. No text, watermark, or borders.`;
 }
