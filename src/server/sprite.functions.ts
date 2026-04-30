@@ -222,7 +222,7 @@ async function runVariant(
   const descriptor = await sanitize(apiKey, system, input);
   const imagePrompt = buildPrompt(descriptor, isHuman);
   const imageUrl = await generateImage(apiKey, imagePrompt);
-  return { descriptor, imagePrompt, imageUrl };
+  return { sanitizerPrompt: system, descriptor, imagePrompt, imageUrl };
 }
 
 export const generateSprite = createServerFn({ method: "POST" })

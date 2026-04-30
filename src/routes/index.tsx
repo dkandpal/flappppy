@@ -22,6 +22,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Variant = {
+  sanitizerPrompt: string;
   descriptor: string;
   imagePrompt: string;
   imageUrl: string;
@@ -201,6 +202,15 @@ function VariantCard({
             className="max-h-[360px] w-auto"
           />
         </div>
+      </Card>
+
+      <Card className="p-4">
+        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+          Sanitizer system prompt
+        </p>
+        <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
+          {variant.sanitizerPrompt}
+        </pre>
       </Card>
 
       <Card className="p-4">
