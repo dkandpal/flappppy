@@ -22,6 +22,7 @@ export const Route = createFileRoute("/")({
 });
 
 type Variant = {
+  sanitizerPrompt: string;
   descriptor: string;
   imagePrompt: string;
   imageUrl: string;
