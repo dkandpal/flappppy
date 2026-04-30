@@ -206,6 +206,15 @@ function VariantCard({
 
       <Card className="p-4">
         <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
+          Sanitizer system prompt
+        </p>
+        <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
+          {variant.sanitizerPrompt}
+        </pre>
+      </Card>
+
+      <Card className="p-4">
+        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
           Sanitized descriptor
         </p>
         <p className="text-sm">{variant.descriptor}</p>
