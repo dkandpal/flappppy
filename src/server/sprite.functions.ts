@@ -235,21 +235,139 @@ async function runVariant(
   return { sanitizerPrompt: system, descriptor, imagePrompt, imageUrl };
 }
 
+function buildImageRedrawPromptB(isHuman: boolean) {
+  const subjectRule = isHuman
+    ? `HUMAN SUBJECT RULE:
+- Generate head and upper shoulders only
+- Face should occupy 75–85% of canvas height
+- Strongly emphasize facial proportions (jaw, nose, eyes, hair silhouette)
+- Allow asymmetry and caricature distortion
+- Do not generate a full body`
+    : `NON-HUMAN SUBJECT RULE:
+- Use a compact, side-facing sprite suitable for a Flappy-style game
+- Emphasize silhouette and iconic shape language
+- Fill 90–95% of the canvas`;
+
+  return `Redraw the subject in the attached reference image as a satirical 2D arcade game sprite.
+
+GOAL:
+- Preserve the most distinctive visual traits of the subject (silhouette, hair, face shape, color cues, clothing)
+- Use caricature exaggeration, not realism
+- Do NOT copy the photo literally — reinterpret as an original cartoon sprite
+- Do NOT include any names, logos, brand marks, slogans, or copyrighted symbols from the reference
+
+EXAGGERATION RULES:
+- Strongly exaggerate the most distinctive features
+- Slightly exaggerate secondary traits
+- Simplify minor details
+- Push silhouette clarity over detail accuracy
+
+STYLE:
+- Bold cartoon caricature
+- Flat vector game art
+- Thick black outline
+- Simple geometric shapes
+- High readability at small size
+- Minimal shading; no gradients
+
+FRAMING:
+- Canvas: 424 × 331 px
+- Pure white background #FFFFFF
+- Subject fills 90–95% of the canvas
+- Subject should touch an invisible bounding box inset 10 px from each edge
+- No cropping, border, watermark, or text
+
+${subjectRule}`;
+}
+
+function buildImageRedrawPromptC(isHuman: boolean) {
+  const subjectRule = isHuman
+    ? `HUMAN SUBJECT RULE:
+- Head and upper shoulders only
+- Face occupies 80–90% of canvas height
+- Exaggerate facial proportions heavily (jaw size, nose shape, eye spacing, hair volume)
+- Allow strong distortion if it improves recognizability`
+    : `NON-HUMAN SUBJECT RULE:
+- Side-facing sprite suitable for Flappy-style gameplay
+- Strong silhouette exaggeration
+- Fill 90–95% of canvas`;
+
+  return `Redraw the subject in the attached reference image as a HIGHLY exaggerated satirical 2D arcade sprite.
+
+GOAL:
+- Make the subject instantly recognizable at a glance from the reference
+- Push caricature to the extreme while remaining visually readable
+- Prioritize identity-defining features (hair, face shape, posture, color cues) over realism
+- Do NOT include names, logos, brand marks, or copyrighted symbols from the reference
+
+EXAGGERATION RULES:
+- Aggressively exaggerate the most iconic features
+- Distort proportions for comedic and recognizable effect
+- Amplify asymmetry and unique quirks
+- Simplify everything else
+
+STYLE:
+- Bold cartoon caricature
+- Flat vector game art
+- Thick black outline
+- Simple shapes, no gradients
+- High contrast and readability
+
+FRAMING:
+- Canvas: 424 × 331 px
+- Pure white background #FFFFFF
+- Subject fills 90–95% of the canvas
+- Subject should touch an invisible bounding box inset 10 px from each edge
+- No cropping, border, watermark, or text
+
+${subjectRule}`;
+}
+
+async function runImageVariant(
+  apiKey: string,
+  imagePrompt: string,
+  referenceImage: string,
+) {
+  const imageUrl = await generateImage(apiKey, imagePrompt, referenceImage);
+  return {
+    sanitizerPrompt: "(skipped — image input used directly as reference)",
+    descriptor: "(image-based input — no text descriptor)",
+    imagePrompt,
+    imageUrl,
+  };
+}
+
 export const generateSprite = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z.object({
-      input: z.string().trim().min(1).max(200),
+      input: z.string().trim().max(200).optional(),
+      referenceImage: z.string().startsWith("data:image/").optional(),
       isHuman: z.boolean().default(false),
-    }).parse(data),
+    })
+      .refine((d) => !!d.input || !!d.referenceImage, {
+        message: "Provide either text input or a reference image",
+      })
+      .parse(data),
   )
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
+    if (data.referenceImage) {
+      const promptB = buildImageRedrawPromptB(data.isHuman);
+      const promptC = buildImageRedrawPromptC(data.isHuman);
+      const [optionB, optionC] = await Promise.all([
+        runImageVariant(apiKey, promptB, data.referenceImage),
+        runImageVariant(apiKey, promptC, data.referenceImage),
+      ]);
+      return { optionB, optionC };
+    }
+
     const [optionB, optionC] = await Promise.all([
-      runVariant(apiKey, SANITIZE_SYSTEM_B, buildImagePromptB, data.input, data.isHuman),
-      runVariant(apiKey, SANITIZE_SYSTEM_C, buildImagePromptC, data.input, data.isHuman),
+      runVariant(apiKey, SANITIZE_SYSTEM_B, buildImagePromptB, data.input!, data.isHuman),
+      runVariant(apiKey, SANITIZE_SYSTEM_C, buildImagePromptC, data.input!, data.isHuman),
     ]);
 
     return { optionB, optionC };
   });
+
