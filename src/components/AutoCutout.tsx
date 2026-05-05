@@ -65,6 +65,43 @@ function cleanMask(mask: Uint8Array, w: number, h: number): Uint8Array {
   return m;
 }
 
+// Fill enclosed holes by flood-filling background from image edges.
+// Any background pixel not reachable from the border is treated as an interior
+// hole (eyes, line art gaps, etc.) and flipped to foreground.
+function fillHoles(mask: Uint8Array, w: number, h: number): Uint8Array {
+  const reachable = new Uint8Array(w * h);
+  const stack: number[] = [];
+  const pushIfBg = (x: number, y: number) => {
+    const i = y * w + x;
+    if (mask[i] === 0 && reachable[i] === 0) {
+      reachable[i] = 1;
+      stack.push(i);
+    }
+  };
+  for (let x = 0; x < w; x++) {
+    pushIfBg(x, 0);
+    pushIfBg(x, h - 1);
+  }
+  for (let y = 0; y < h; y++) {
+    pushIfBg(0, y);
+    pushIfBg(w - 1, y);
+  }
+  while (stack.length) {
+    const p = stack.pop()!;
+    const x = p % w;
+    const y = (p - x) / w;
+    if (x > 0) pushIfBg(x - 1, y);
+    if (x < w - 1) pushIfBg(x + 1, y);
+    if (y > 0) pushIfBg(x, y - 1);
+    if (y < h - 1) pushIfBg(x, y + 1);
+  }
+  const out = new Uint8Array(w * h);
+  for (let i = 0; i < mask.length; i++) {
+    out[i] = mask[i] === 1 || reachable[i] === 0 ? 1 : 0;
+  }
+  return out;
+}
+
 // Find largest connected component (4-connectivity) and return mask with only it
 function keepLargestComponent(mask: Uint8Array, w: number, h: number): Uint8Array {
   const labels = new Int32Array(w * h);
@@ -289,6 +326,7 @@ export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor }
       let mask = buildMask(imgData.data, w, h, tolerance);
       mask = cleanMask(mask, w, h);
       mask = keepLargestComponent(mask, w, h);
+      mask = fillHoles(mask, w, h);
 
       // Bounding box
       let minX = w,
