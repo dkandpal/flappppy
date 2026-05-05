@@ -7,6 +7,10 @@ type Props = {
   imageUrl: string;
   filename?: string;
   onCopyToEditor?: (dataUrl: string) => void;
+  defaultTolerance?: number;
+  defaultPadding?: number;
+  autoRun?: boolean;
+  onCutoutReady?: (dataUrl: string) => void;
 };
 
 type Point = { x: number; y: number };
@@ -280,13 +284,13 @@ function simplify(points: Point[], epsilon: number): Point[] {
   return simplified;
 }
 
-export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor }: Props) {
+export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor, defaultTolerance = 10, defaultPadding = 8, autoRun = false, onCutoutReady }: Props) {
   const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [tolerance, setTolerance] = useState(10); // 0-50; bg if rgb > 255-tolerance
-  const [padding, setPadding] = useState(8);
+  const [tolerance, setTolerance] = useState(defaultTolerance); // 0-50; bg if rgb > 255-tolerance
+  const [padding, setPadding] = useState(defaultPadding);
   const [contour, setContour] = useState<Point[]>([]);
   const [bbox, setBbox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
@@ -314,6 +318,14 @@ export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor }
     };
     img.src = imageUrl;
   }, [imageUrl]);
+
+  // Auto-run detection once image is loaded (when autoRun=true)
+  useEffect(() => {
+    if (autoRun && imgSize) {
+      runDetection();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun, imgSize, tolerance, padding]);
 
   function runDetection() {
     const src = sourceCanvasRef.current;
@@ -379,6 +391,7 @@ export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor }
       cctx.putImageData(cropped, 0, 0);
       const dataUrl = cutCanvas.toDataURL("image/png");
       setCutoutDataUrl(dataUrl);
+      onCutoutReady?.(dataUrl);
 
       // Render preview
       const preview = previewCanvasRef.current;

@@ -453,6 +453,18 @@ function StepThree({
   onStartOver: () => void;
 }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);
+
+  // Reset cutout when variant changes
+  // (variant.imageUrl change re-mounts AutoCutout via key below)
+
+  const checkerStyle: React.CSSProperties = {
+    backgroundImage:
+      "linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%)",
+    backgroundSize: "16px 16px",
+    backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+    backgroundColor: "#ffffff",
+  };
 
   return (
     <div className="space-y-6">
@@ -468,16 +480,32 @@ function StepThree({
 
       <Card className="overflow-hidden p-0">
         <div
-          className="mx-auto bg-white"
-          style={{ aspectRatio: "17 / 12", maxWidth: 600 }}
+          className="mx-auto flex items-center justify-center"
+          style={{ ...checkerStyle, aspectRatio: "17 / 12", maxWidth: 600 }}
         >
           <img
-            src={variant.imageUrl}
+            src={cutoutUrl ?? variant.imageUrl}
             alt="Selected sprite"
-            className="h-full w-full object-contain"
+            className="max-h-full max-w-full object-contain"
           />
         </div>
       </Card>
+      <p className="text-center text-xs text-muted-foreground">
+        {cutoutUrl ? "Background removed automatically" : "Removing background…"}
+      </p>
+
+      {/* Hidden auto-cutout to drive the preview above */}
+      <div className="sr-only" aria-hidden>
+        <AutoCutout
+          key={variant.imageUrl}
+          imageUrl={variant.imageUrl}
+          filename="sprite-cutout.png"
+          autoRun
+          defaultTolerance={25}
+          defaultPadding={0}
+          onCutoutReady={setCutoutUrl}
+        />
+      </div>
 
       <div className="flex flex-wrap justify-center gap-3">
         <Button
@@ -508,14 +536,19 @@ function StepThree({
         <div className="space-y-4">
           <div className="flex justify-center">
             <a
-              href={variant.imageUrl}
-              download="sprite.png"
+              href={cutoutUrl ?? variant.imageUrl}
+              download={cutoutUrl ? "sprite-cutout.png" : "sprite.png"}
               className="inline-flex items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
             >
-              Download PNG
+              Download cutout PNG
             </a>
           </div>
-          <AutoCutout imageUrl={variant.imageUrl} filename="sprite-cutout.png" />
+          <AutoCutout
+            imageUrl={variant.imageUrl}
+            filename="sprite-cutout.png"
+            defaultTolerance={25}
+            defaultPadding={0}
+          />
         </div>
       )}
     </div>
