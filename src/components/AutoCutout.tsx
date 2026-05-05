@@ -7,6 +7,10 @@ type Props = {
   imageUrl: string;
   filename?: string;
   onCopyToEditor?: (dataUrl: string) => void;
+  defaultTolerance?: number;
+  defaultPadding?: number;
+  autoRun?: boolean;
+  onCutoutReady?: (dataUrl: string) => void;
 };
 
 type Point = { x: number; y: number };
