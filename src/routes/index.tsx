@@ -502,17 +502,23 @@ function StepThree({
       <Card className="overflow-hidden p-0">
         <div
           className="mx-auto flex items-center justify-center"
-          style={{ ...checkerStyle, aspectRatio: "17 / 12", maxWidth: 600 }}
+          style={{ ...checkerStyle, width: SPRITE_W, height: SPRITE_H }}
         >
           <img
-            src={cutoutUrl ?? variant.imageUrl}
+            src={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
             alt="Selected sprite"
-            className="max-h-full max-w-full object-contain"
+            width={SPRITE_W}
+            height={SPRITE_H}
+            style={{ width: SPRITE_W, height: SPRITE_H, display: "block" }}
           />
         </div>
       </Card>
       <p className="text-center text-xs text-muted-foreground">
-        {cutoutUrl ? "Background removed automatically" : "Removing background…"}
+        {stretchedUrl
+          ? `Stretched to ${SPRITE_W}×${SPRITE_H} for sprite sheet`
+          : cutoutUrl
+            ? "Resizing…"
+            : "Removing background…"}
       </p>
 
       {/* Hidden auto-cutout to drive the preview above */}
