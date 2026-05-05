@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -266,6 +266,33 @@ function Index() {
   );
 }
 
+const TARGET_W = 17;
+const TARGET_H = 12;
+const DISPLAY_SCALE = 24; // 17*24 x 12*24 = 408 x 288 preview
+
+async function downscaleTo17x12(srcUrl: string): Promise<string> {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = srcUrl;
+  });
+  const canvas = document.createElement("canvas");
+  canvas.width = TARGET_W;
+  canvas.height = TARGET_H;
+  const ctx = canvas.getContext("2d")!;
+  ctx.imageSmoothingEnabled = false;
+  // Cover-fit: preserve subject by scaling to fill 17x12
+  const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height);
+  const dw = img.width * scale;
+  const dh = img.height * scale;
+  const dx = (TARGET_W - dw) / 2;
+  const dy = (TARGET_H - dh) / 2;
+  ctx.drawImage(img, dx, dy, dw, dh);
+  return canvas.toDataURL("image/png");
+}
+
 function VariantCard({
   title,
   subtitle,
@@ -277,6 +304,20 @@ function VariantCard({
   variant: Variant;
   filename: string;
 }) {
+  const [pixelUrl, setPixelUrl] = useState<string | null>(null);
+  const [pixelError, setPixelError] = useState<string | null>(null);
+  const lastSrc = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!variant.imageUrl || lastSrc.current === variant.imageUrl) return;
+    lastSrc.current = variant.imageUrl;
+    setPixelUrl(null);
+    setPixelError(null);
+    downscaleTo17x12(variant.imageUrl)
+      .then(setPixelUrl)
+      .catch((e) => setPixelError(e.message));
+  }, [variant.imageUrl]);
+
   return (
     <div className="space-y-4">
       <div>
@@ -286,11 +327,22 @@ function VariantCard({
 
       <Card className="overflow-hidden p-0">
         <div className="flex items-center justify-center bg-white p-4">
-          <img
-            src={variant.imageUrl}
-            alt={`${title} sprite`}
-            className="max-h-[360px] w-auto"
-          />
+          {pixelUrl ? (
+            <img
+              src={pixelUrl}
+              alt={`${title} sprite (17x12)`}
+              width={TARGET_W * DISPLAY_SCALE}
+              height={TARGET_H * DISPLAY_SCALE}
+              style={{ imageRendering: "pixelated" }}
+            />
+          ) : pixelError ? (
+            <p className="text-xs text-destructive">{pixelError}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Downscaling to 17×12…</p>
+          )}
+        </div>
+        <div className="border-t border-border bg-muted/30 px-4 py-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
+          True size: 17 × 12 px (shown {DISPLAY_SCALE}× scaled)
         </div>
       </Card>
 
@@ -319,13 +371,15 @@ function VariantCard({
         </pre>
       </Card>
 
-      <a
-        href={variant.imageUrl}
-        download={filename}
-        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-      >
-        Download PNG
-      </a>
+      {pixelUrl && (
+        <a
+          href={pixelUrl}
+          download={filename.replace(/\.png$/, "-17x12.png")}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Download 17×12 PNG
+        </a>
+      )}
     </div>
   );
 }
