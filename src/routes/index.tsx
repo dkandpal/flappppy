@@ -4,9 +4,9 @@ import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import { Card } from "@/components/ui/card";
 import { AutoCutout } from "@/components/AutoCutout";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Turn any prompt into an original, non-infringing 2D game sprite. Sanitize input, then generate with AI.",
+          "Turn any prompt into an original, non-infringing 2D game sprite in three simple steps.",
       },
     ],
   }),
@@ -29,19 +29,20 @@ type Variant = {
   imageUrl: string;
 };
 
-type Result = {
-  optionB: Variant;
-  optionC: Variant;
-};
+type Result = { optionB: Variant; optionC: Variant };
+type Step = 1 | 2 | 3;
+type VariantKey = "B" | "C";
 
 function Index() {
+  const [step, setStep] = useState<Step>(1);
   const [mode, setMode] = useState<"text" | "image">("text");
   const [input, setInput] = useState("");
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
-  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [selected, setSelected] = useState<VariantKey | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -64,258 +65,459 @@ function Index() {
     setLoading(true);
     setError(null);
     setResult(null);
-    setStep(1);
+    setSelected(null);
     try {
-      setStep(2);
       const payload =
         mode === "image"
           ? { referenceImage: referenceImage! }
           : { input: input.trim() };
       const res = await generateSprite({ data: payload });
-      setStep(3);
       setResult(res);
-      setStep(4);
+      setStep(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-      setStep(0);
     } finally {
       setLoading(false);
     }
   }
 
-  const steps = [
-    { n: 1, label: mode === "image" ? "Upload image" : "User input" },
-    { n: 2, label: mode === "image" ? "Prepare prompts" : "Sanitize (B + C)" },
-    { n: 3, label: "Send to Nano Banana" },
-    { n: 4, label: "Return images" },
-  ];
+  function pickVariant(key: VariantKey) {
+    setSelected(key);
+    setStep(3);
+  }
 
+  function startOver() {
+    setStep(1);
+    setSelected(null);
+    setResult(null);
+    setError(null);
+  }
+
+  const selectedVariant =
+    result && selected ? (selected === "B" ? result.optionB : result.optionC) : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-6 py-16">
-        <header className="mb-10">
+      <div className="mx-auto max-w-5xl px-6 py-12">
+        <header className="mb-8">
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Sprite Forge
           </p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Safe 2D sprite generator
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Make your game sprite in 3 steps
           </h1>
-          <p className="mt-3 text-muted-foreground">
-            Type anything — names, characters, brands. We sanitize it into an original
-            descriptor, then generate two sprite variants: Balanced (B) and Max Likeness (C).
-          </p>
+          <StepIndicator step={step} />
         </header>
 
-        <Card className="p-6">
-          <form onSubmit={handleGenerate} className="space-y-5">
-            <div className="flex gap-2 rounded-md border border-border p-1">
-              <button
-                type="button"
-                onClick={() => setMode("text")}
-                disabled={loading}
-                className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                  mode === "text"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                Text prompt
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("image")}
-                disabled={loading}
-                className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-                  mode === "image"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                Upload image
-              </button>
-            </div>
-
-            {mode === "text" ? (
-              <div className="space-y-2">
-                <Label htmlFor="input">Your idea</Label>
-                <Input
-                  id="input"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="e.g. wolverine, big bird, donald trump..."
-                  maxLength={200}
-                  disabled={loading}
-                />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label htmlFor="file">Reference image</Label>
-                <Input
-                  id="file"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handleFileChange}
-                  disabled={loading}
-                />
-                {referenceImage && (
-                  <div className="mt-2 flex items-center gap-3 rounded-md border border-border p-3">
-                    <img
-                      src={referenceImage}
-                      alt="Reference"
-                      className="h-20 w-20 rounded object-cover"
-                    />
-                    <div className="flex-1 text-xs text-muted-foreground">
-                      We'll send this image to Nano Banana and ask it to redraw
-                      the subject as a 2D arcade sprite (B + C variants).
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setReferenceImage(null)}
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                      disabled={loading}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={
-                loading ||
-                (mode === "text" ? !input.trim() : !referenceImage)
-              }
-              className="w-full"
-            >
-              {loading ? "Generating..." : "Generate sprites"}
-            </Button>
-          </form>
-        </Card>
-
-        {/* Pipeline */}
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {steps.map((s) => {
-            const active = step >= s.n;
-            const current = step === s.n && loading;
-            return (
-              <div
-                key={s.n}
-                className={`rounded-md border p-3 text-sm transition-colors ${
-                  active
-                    ? "border-primary bg-primary/5 text-foreground"
-                    : "border-border text-muted-foreground"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
-                      active ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}
-                  >
-                    {s.n}
-                  </span>
-                  <span className="font-medium">{s.label}</span>
-                </div>
-                {current && (
-                  <p className="mt-1 text-xs text-muted-foreground">Working…</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
         {error && (
-          <Card className="mt-6 border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+          <Card className="mb-6 border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
             {error}
           </Card>
         )}
 
-        {result && (
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <VariantCard
-              title="Option B — Balanced"
-              subtitle="High likeness, still safe"
-              variant={result.optionB}
-              filename="sprite-option-b.png"
-            />
-            <VariantCard
-              title="Option C — Max Likeness"
-              subtitle="Aggressive caricature / satire"
-              variant={result.optionC}
-              filename="sprite-option-c.png"
-            />
-          </div>
+        {step === 1 && (
+          <StepOne
+            mode={mode}
+            setMode={setMode}
+            input={input}
+            setInput={setInput}
+            referenceImage={referenceImage}
+            setReferenceImage={setReferenceImage}
+            handleFileChange={handleFileChange}
+            handleGenerate={handleGenerate}
+            loading={loading}
+          />
+        )}
+
+        {step === 2 && result && (
+          <StepTwo
+            result={result}
+            onPick={pickVariant}
+            onBack={startOver}
+            showDetails={showDetails}
+            setShowDetails={setShowDetails}
+          />
+        )}
+
+        {step === 3 && selectedVariant && (
+          <StepThree
+            variant={selectedVariant}
+            variantLabel={selected === "B" ? "Variant 1" : "Variant 2"}
+            onBack={() => setStep(2)}
+            onStartOver={startOver}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function VariantCard({
-  title,
-  subtitle,
-  variant,
-  filename,
+function StepIndicator({ step }: { step: Step }) {
+  const labels = ["Describe", "Choose", "Confirm"];
+  return (
+    <div className="mt-5 flex items-center gap-2 text-xs">
+      {labels.map((label, i) => {
+        const n = (i + 1) as Step;
+        const active = step === n;
+        const done = step > n;
+        return (
+          <div key={label} className="flex items-center gap-2">
+            <div
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : done
+                    ? "bg-primary/30 text-foreground"
+                    : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {n}
+            </div>
+            <span
+              className={
+                active ? "font-medium text-foreground" : "text-muted-foreground"
+              }
+            >
+              {label}
+            </span>
+            {i < labels.length - 1 && (
+              <div className="mx-2 h-px w-8 bg-border" />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StepOne({
+  mode,
+  setMode,
+  input,
+  setInput,
+  referenceImage,
+  setReferenceImage,
+  handleFileChange,
+  handleGenerate,
+  loading,
 }: {
-  title: string;
-  subtitle: string;
-  variant: Variant;
-  filename: string;
+  mode: "text" | "image";
+  setMode: (m: "text" | "image") => void;
+  input: string;
+  setInput: (v: string) => void;
+  referenceImage: string | null;
+  setReferenceImage: (v: string | null) => void;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleGenerate: (e: React.FormEvent) => void;
+  loading: boolean;
 }) {
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="text-xs text-muted-foreground">{subtitle}</p>
+    <Card className="p-6">
+      <form onSubmit={handleGenerate} className="space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold">Describe your character</h2>
+          <p className="text-sm text-muted-foreground">
+            Type an idea or upload a reference image. Press Generate to continue.
+          </p>
+        </div>
+
+        <div className="flex gap-2 rounded-md border border-border p-1">
+          <button
+            type="button"
+            onClick={() => setMode("text")}
+            disabled={loading}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+              mode === "text"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            Text prompt
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("image")}
+            disabled={loading}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+              mode === "image"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            Upload image
+          </button>
+        </div>
+
+        {mode === "text" ? (
+          <div className="space-y-2">
+            <Label htmlFor="input">Your idea</Label>
+            <Input
+              id="input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="e.g. a brave knight, a fire-breathing fox, a cyber ninja..."
+              maxLength={200}
+              disabled={loading}
+              autoFocus
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="file">Reference image</Label>
+            <Input
+              id="file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleFileChange}
+              disabled={loading}
+            />
+            {referenceImage && (
+              <div className="mt-2 flex items-center gap-3 rounded-md border border-border p-3">
+                <img
+                  src={referenceImage}
+                  alt="Reference"
+                  className="h-20 w-20 rounded object-cover"
+                />
+                <div className="flex-1 text-xs text-muted-foreground">
+                  We'll use this image as the basis for your sprite.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReferenceImage(null)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                  disabled={loading}
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          disabled={
+            loading || (mode === "text" ? !input.trim() : !referenceImage)
+          }
+          className="w-full"
+        >
+          {loading ? "Generating your sprites…" : "Generate"}
+        </Button>
+
+        {loading && (
+          <p className="text-center text-xs text-muted-foreground">
+            This usually takes 10–20 seconds.
+          </p>
+        )}
+      </form>
+    </Card>
+  );
+}
+
+function StepTwo({
+  result,
+  onPick,
+  onBack,
+  showDetails,
+  setShowDetails,
+}: {
+  result: Result;
+  onPick: (k: VariantKey) => void;
+  onBack: () => void;
+  showDetails: boolean;
+  setShowDetails: (v: boolean) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">Pick your favorite</h2>
+          <p className="text-sm text-muted-foreground">
+            Click a variant to continue.
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          ← Start over
+        </Button>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <VariantChoice
+          label="Variant 1"
+          variant={result.optionB}
+          onPick={() => onPick("B")}
+          showDetails={showDetails}
+        />
+        <VariantChoice
+          label="Variant 2"
+          variant={result.optionC}
+          onPick={() => onPick("C")}
+          showDetails={showDetails}
+        />
+      </div>
+
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => setShowDetails(!showDetails)}
+          className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          {showDetails ? "Hide technical details" : "Show technical details"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VariantChoice({
+  label,
+  variant,
+  onPick,
+  showDetails,
+}: {
+  label: string;
+  variant: Variant;
+  onPick: () => void;
+  showDetails: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={onPick}
+        className="group block w-full overflow-hidden rounded-lg border-2 border-border bg-white transition-all hover:border-primary hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        style={{ aspectRatio: "17 / 12" }}
+      >
+        <img
+          src={variant.imageUrl}
+          alt={label}
+          className="h-full w-full object-contain transition-transform group-hover:scale-[1.02]"
+        />
+      </button>
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold">{label}</h3>
+        <Button size="sm" onClick={onPick}>
+          Choose this →
+        </Button>
+      </div>
+
+      {showDetails && (
+        <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
+          <DetailBlock label="Sanitized descriptor" content={variant.descriptor} />
+          <DetailBlock label="Image prompt" content={variant.imagePrompt} mono />
+          <DetailBlock
+            label="Sanitizer system prompt"
+            content={variant.sanitizerPrompt}
+            mono
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailBlock({
+  label,
+  content,
+  mono,
+}: {
+  label: string;
+  content: string;
+  mono?: boolean;
+}) {
+  return (
+    <div>
+      <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      {mono ? (
+        <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
+          {content}
+        </pre>
+      ) : (
+        <p className="text-xs">{content}</p>
+      )}
+    </div>
+  );
+}
+
+function StepThree({
+  variant,
+  variantLabel,
+  onBack,
+  onStartOver,
+}: {
+  variant: Variant;
+  variantLabel: string;
+  onBack: () => void;
+  onStartOver: () => void;
+}) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+          {variantLabel} selected
+        </p>
+        <h2 className="mt-1 text-2xl font-bold">Ready to create your game?</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Your sprite is ready. Let's bring it to life.
+        </p>
       </div>
 
       <Card className="overflow-hidden p-0">
-        <div className="bg-white" style={{ aspectRatio: "17 / 12" }}>
+        <div
+          className="mx-auto bg-white"
+          style={{ aspectRatio: "17 / 12", maxWidth: 600 }}
+        >
           <img
             src={variant.imageUrl}
-            alt={`${title} sprite`}
+            alt="Selected sprite"
             className="h-full w-full object-contain"
           />
         </div>
       </Card>
 
-      <Card className="p-4">
-        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-          Sanitizer system prompt
-        </p>
-        <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
-          {variant.sanitizerPrompt}
-        </pre>
-      </Card>
+      <div className="flex flex-wrap justify-center gap-3">
+        <Button
+          size="lg"
+          onClick={() => toast.success("Game builder coming soon!")}
+        >
+          Yes, let's create my game →
+        </Button>
+        <Button variant="outline" size="lg" onClick={onBack}>
+          Pick a different variant
+        </Button>
+        <Button variant="ghost" size="lg" onClick={onStartOver}>
+          Start over
+        </Button>
+      </div>
 
-      <Card className="p-4">
-        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-          Sanitized descriptor
-        </p>
-        <p className="text-sm">{variant.descriptor}</p>
-      </Card>
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          {showAdvanced ? "Hide advanced tools" : "Show advanced tools (download, cutout)"}
+        </button>
+      </div>
 
-      <Card className="p-4">
-        <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-          Final image prompt
-        </p>
-        <pre className="whitespace-pre-wrap text-xs text-muted-foreground">
-          {variant.imagePrompt}
-        </pre>
-      </Card>
-
-      <a
-        href={variant.imageUrl}
-        download={filename}
-        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-      >
-        Download PNG
-      </a>
-
-      <AutoCutout imageUrl={variant.imageUrl} filename={filename.replace(/\.png$/, "-cutout.png")} />
+      {showAdvanced && (
+        <div className="space-y-4">
+          <div className="flex justify-center">
+            <a
+              href={variant.imageUrl}
+              download="sprite.png"
+              className="inline-flex items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
+            >
+              Download PNG
+            </a>
+          </div>
+          <AutoCutout imageUrl={variant.imageUrl} filename="sprite-cutout.png" />
+        </div>
+      )}
     </div>
   );
 }
