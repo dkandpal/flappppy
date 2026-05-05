@@ -266,11 +266,10 @@ function Index() {
   );
 }
 
-const TARGET_W = 17;
-const TARGET_H = 12;
-const DISPLAY_SCALE = 24; // 17*24 x 12*24 = 408 x 288 preview
+const RATIO_W = 17;
+const RATIO_H = 12;
 
-async function downscaleTo17x12(srcUrl: string): Promise<string> {
+async function cropTo17x12(srcUrl: string): Promise<{ url: string; w: number; h: number }> {
   const img = new Image();
   img.crossOrigin = "anonymous";
   await new Promise<void>((resolve, reject) => {
@@ -278,19 +277,25 @@ async function downscaleTo17x12(srcUrl: string): Promise<string> {
     img.onerror = () => reject(new Error("Failed to load image"));
     img.src = srcUrl;
   });
+  const targetRatio = RATIO_W / RATIO_H;
+  const srcRatio = img.width / img.height;
+  let cw = img.width;
+  let ch = img.height;
+  if (srcRatio > targetRatio) {
+    // too wide -> crop sides
+    cw = Math.round(img.height * targetRatio);
+  } else {
+    // too tall -> crop top/bottom
+    ch = Math.round(img.width / targetRatio);
+  }
+  const sx = Math.floor((img.width - cw) / 2);
+  const sy = Math.floor((img.height - ch) / 2);
   const canvas = document.createElement("canvas");
-  canvas.width = TARGET_W;
-  canvas.height = TARGET_H;
+  canvas.width = cw;
+  canvas.height = ch;
   const ctx = canvas.getContext("2d")!;
-  ctx.imageSmoothingEnabled = false;
-  // Cover-fit: preserve subject by scaling to fill 17x12
-  const scale = Math.max(TARGET_W / img.width, TARGET_H / img.height);
-  const dw = img.width * scale;
-  const dh = img.height * scale;
-  const dx = (TARGET_W - dw) / 2;
-  const dy = (TARGET_H - dh) / 2;
-  ctx.drawImage(img, dx, dy, dw, dh);
-  return canvas.toDataURL("image/png");
+  ctx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+  return { url: canvas.toDataURL("image/png"), w: cw, h: ch };
 }
 
 function VariantCard({
