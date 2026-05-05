@@ -499,11 +499,10 @@ function StepThree({
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {([
           { label: "Idle", overlay: null },
           { label: "Hit", overlay: <XOverlay /> },
-          { label: "Jump", overlay: <SpringsOverlay /> },
         ] as const).map(({ label, overlay }) => (
           <div key={label} className="space-y-2">
             <Card className="overflow-hidden p-0">
