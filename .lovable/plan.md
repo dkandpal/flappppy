@@ -1,49 +1,47 @@
-## Goal
+# Plan: Three Sprite Variants in Step 3
 
-On Step 3 ("Ready to create your game?"), display the **transparent-background cutout** of the selected sprite as the main image, automatically generated using **white tolerance = 25** and **padding = 0px**. No clicks required.
+Replace the single stretched-sprite preview in `StepThree` with a row of three labeled previews, each at the required 424×331 sprite-sheet size:
 
-## Changes
+1. **Idle** — the stretched cutout as-is (current behavior).
+2. **Hit** — same sprite with a giant red "X" overlaid on top of the avatar (representing being hit/dead).
+3. **Jump** — same sprite with small spring graphics overlaid along the bottom edge (representing jumping).
 
-### 1. `src/components/AutoCutout.tsx` — add auto-run + callback props
+The overlays are conceptual "layers" applied uniformly to every avatar — the same X / spring artwork regardless of which sprite was chosen.
 
-Add three optional props:
-- `defaultTolerance?: number` — initial tolerance (defaults to current 10)
-- `defaultPadding?: number` — initial padding (defaults to current 8)
-- `autoRun?: boolean` — when true, run `runDetection()` once after the source image loads
-- `onCutoutReady?: (dataUrl: string) => void` — fires whenever a new cutout PNG is produced
+## UI Changes (`src/routes/index.tsx` → `StepThree`)
 
-Behavior:
-- Initialize `tolerance`/`padding` state from the new defaults.
-- After the image finishes loading and `imgSize` is set, if `autoRun` is true, call `runDetection()` once.
-- Inside `runDetection`, after `setCutoutDataUrl(dataUrl)`, also call `onCutoutReady?.(dataUrl)`.
+- Keep all existing logic for cutout + stretching (`cutoutUrl`, `stretchedUrl`, the hidden `AutoCutout` driver, and the 424×331 stretch effect). No changes to the cutout pipeline.
+- Replace the single preview `Card` with a responsive row of three `Card`s (stacked on mobile, side-by-side on md+). Each card contains:
+  - A 424×331 checkerboard container showing the sprite.
+  - A small caption beneath: "Idle", "Hit", "Jump".
+- All three cards use the same `stretchedUrl` (falling back to `cutoutUrl`, then `variant.imageUrl`) as the base layer.
+- Overlays are absolutely positioned inside the card on top of the base `<img>`.
 
-Existing manual UI (sliders, button, downloads) stays unchanged — the component still works as today when those props are omitted.
+```text
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│  sprite  │  │ sprite+X │  │ sprite+⚙⚙│
+│  (Idle)  │  │  (Hit)   │  │  (Jump)  │
+└──────────┘  └──────────┘  └──────────┘
+```
 
-### 2. `src/routes/index.tsx` — `StepThree` shows the cutout
+- Container width on the page expands; cards may scale down visually on smaller viewports via `max-width: 100%` while preserving aspect ratio (`aspect-ratio: 424 / 331`). Native pixel size of the underlying canvas/image stays 424×331 for downloads.
 
-- Add local state `const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);`
-- Replace the main `<img src={variant.imageUrl} …>` Card with:
-  - A checkerboard-styled container (light gray + white tiles via a CSS background) so transparency is visible.
-  - `<img src={cutoutUrl ?? variant.imageUrl}>` — falls back to the original until the cutout is ready.
-  - A small caption: "Background removed automatically" (or a subtle spinner while `cutoutUrl` is null).
-- Render an **always-mounted but visually hidden** `AutoCutout` that drives the cutout:
-  ```tsx
-  <div className="sr-only" aria-hidden>
-    <AutoCutout
-      imageUrl={variant.imageUrl}
-      filename="sprite-cutout.png"
-      autoRun
-      defaultTolerance={25}
-      defaultPadding={0}
-      onCutoutReady={setCutoutUrl}
-    />
-  </div>
-  ```
-- The "Show advanced tools" section keeps its own visible `<AutoCutout>` for manual tweaking/downloading (unchanged), but its defaults are also bumped to `defaultTolerance={25}` `defaultPadding={0}` for consistency.
-- "Download PNG" button in advanced tools: switch its `href` to `cutoutUrl ?? variant.imageUrl` and rename to "Download cutout PNG" so the primary download matches what's shown.
+## Overlay Implementation
 
-## Notes
+Two new lightweight presentational subcomponents inside `index.tsx`:
 
-- Fully client-side; no backend or API changes.
-- If detection finds no foreground (blank/all-white image), `cutoutUrl` stays null and the original image is shown as a graceful fallback.
-- Step 1, Step 2, and the generation pipeline are untouched.
+- `XOverlay` — an absolutely-positioned SVG that draws two thick diagonal strokes spanning the full 424×331 frame, in a bold red (e.g. `#dc2626`) with slight stroke opacity, `pointer-events: none`. Sized `100%/100%` so it scales with the card.
+- `SpringsOverlay` — an absolutely-positioned SVG anchored to the bottom of the frame, drawing 3–4 small coil/spring shapes (simple zig-zag or stacked-loop paths) evenly spaced along the bottom ~20% of the height. Neutral metallic gray (`#6b7280`) with darker outline. Also `pointer-events: none`.
+
+Both overlays are pure SVG inline in JSX — no new assets, no extra dependencies.
+
+## Advanced Tools Section
+
+- The existing "advanced tools" download link continues to download the plain stretched cutout (`stretchedUrl`). Overlay variants are display-only for now — no separate download buttons (can be added later if requested).
+- The existing manual `AutoCutout` editor remains unchanged.
+
+## Files to Edit
+
+- `src/routes/index.tsx` — modify `StepThree`; add `XOverlay` and `SpringsOverlay` components in the same file.
+
+No new dependencies, no server changes, no route changes.

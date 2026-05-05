@@ -499,20 +499,48 @@ function StepThree({
         </p>
       </div>
 
-      <Card className="overflow-hidden p-0">
-        <div
-          className="mx-auto flex items-center justify-center"
-          style={{ ...checkerStyle, width: SPRITE_W, height: SPRITE_H }}
-        >
-          <img
-            src={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
-            alt="Selected sprite"
-            width={SPRITE_W}
-            height={SPRITE_H}
-            style={{ width: SPRITE_W, height: SPRITE_H, display: "block" }}
-          />
-        </div>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        {([
+          { label: "Idle", overlay: null },
+          { label: "Hit", overlay: <XOverlay /> },
+          { label: "Jump", overlay: <SpringsOverlay /> },
+        ] as const).map(({ label, overlay }) => (
+          <div key={label} className="space-y-2">
+            <Card className="overflow-hidden p-0">
+              <div
+                className="relative mx-auto"
+                style={{
+                  ...checkerStyle,
+                  width: "100%",
+                  maxWidth: SPRITE_W,
+                  aspectRatio: `${SPRITE_W} / ${SPRITE_H}`,
+                }}
+              >
+                <img
+                  src={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
+                  alt={`Selected sprite — ${label}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                    position: "absolute",
+                    inset: 0,
+                  }}
+                />
+                {overlay && (
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    aria-hidden
+                  >
+                    {overlay}
+                  </div>
+                )}
+              </div>
+            </Card>
+            <p className="text-center text-sm font-medium">{label}</p>
+          </div>
+        ))}
+      </div>
       <p className="text-center text-xs text-muted-foreground">
         {stretchedUrl
           ? `Stretched to ${SPRITE_W}×${SPRITE_H} for sprite sheet`
