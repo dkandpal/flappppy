@@ -326,6 +326,7 @@ export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor }
       let mask = buildMask(imgData.data, w, h, tolerance);
       mask = cleanMask(mask, w, h);
       mask = keepLargestComponent(mask, w, h);
+      mask = fillHoles(mask, w, h);
 
       // Bounding box
       let minX = w,
