@@ -499,20 +499,48 @@ function StepThree({
         </p>
       </div>
 
-      <Card className="overflow-hidden p-0">
-        <div
-          className="mx-auto flex items-center justify-center"
-          style={{ ...checkerStyle, width: SPRITE_W, height: SPRITE_H }}
-        >
-          <img
-            src={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
-            alt="Selected sprite"
-            width={SPRITE_W}
-            height={SPRITE_H}
-            style={{ width: SPRITE_W, height: SPRITE_H, display: "block" }}
-          />
-        </div>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        {([
+          { label: "Idle", overlay: null },
+          { label: "Hit", overlay: <XOverlay /> },
+          { label: "Jump", overlay: <SpringsOverlay /> },
+        ] as const).map(({ label, overlay }) => (
+          <div key={label} className="space-y-2">
+            <Card className="overflow-hidden p-0">
+              <div
+                className="relative mx-auto"
+                style={{
+                  ...checkerStyle,
+                  width: "100%",
+                  maxWidth: SPRITE_W,
+                  aspectRatio: `${SPRITE_W} / ${SPRITE_H}`,
+                }}
+              >
+                <img
+                  src={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
+                  alt={`Selected sprite — ${label}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                    position: "absolute",
+                    inset: 0,
+                  }}
+                />
+                {overlay && (
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    aria-hidden
+                  >
+                    {overlay}
+                  </div>
+                )}
+              </div>
+            </Card>
+            <p className="text-center text-sm font-medium">{label}</p>
+          </div>
+        ))}
+      </div>
       <p className="text-center text-xs text-muted-foreground">
         {stretchedUrl
           ? `Stretched to ${SPRITE_W}×${SPRITE_H} for sprite sheet`
@@ -579,5 +607,85 @@ function StepThree({
         </div>
       )}
     </div>
+  );
+}
+
+function XOverlay() {
+  return (
+    <svg
+      viewBox="0 0 424 331"
+      preserveAspectRatio="none"
+      style={{ width: "100%", height: "100%", display: "block" }}
+    >
+      <g
+        stroke="#dc2626"
+        strokeWidth={36}
+        strokeLinecap="round"
+        opacity={0.85}
+      >
+        <line x1={50} y1={40} x2={374} y2={291} />
+        <line x1={374} y1={40} x2={50} y2={291} />
+      </g>
+    </svg>
+  );
+}
+
+function SpringsOverlay() {
+  // Three small coil springs along the bottom edge
+  const springs = [0.2, 0.5, 0.8];
+  return (
+    <svg
+      viewBox="0 0 424 331"
+      preserveAspectRatio="none"
+      style={{ width: "100%", height: "100%", display: "block" }}
+    >
+      {springs.map((cx, i) => {
+        const x = cx * 424;
+        const top = 260;
+        const bottom = 322;
+        const w = 38;
+        // Zig-zag coil path
+        const coils = 4;
+        const step = (bottom - top) / coils;
+        let d = `M ${x - w / 2} ${top}`;
+        for (let c = 0; c < coils; c++) {
+          const y1 = top + step * (c + 0.5);
+          const y2 = top + step * (c + 1);
+          const xRight = x + w / 2;
+          const xLeft = x - w / 2;
+          d += ` L ${c % 2 === 0 ? xRight : xLeft} ${y1}`;
+          d += ` L ${c % 2 === 0 ? xLeft : xRight} ${y2}`;
+        }
+        return (
+          <g key={i}>
+            <path
+              d={d}
+              fill="none"
+              stroke="#374151"
+              strokeWidth={7}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={d}
+              fill="none"
+              stroke="#9ca3af"
+              strokeWidth={3.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {/* Base plate */}
+            <rect
+              x={x - w / 2 - 6}
+              y={bottom}
+              width={w + 12}
+              height={6}
+              rx={2}
+              fill="#374151"
+            />
+          </g>
+        );
+      })}
+    </svg>
   );
 }
