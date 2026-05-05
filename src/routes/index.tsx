@@ -563,8 +563,8 @@ function StepThree({
         <div className="space-y-4">
           <div className="flex justify-center">
             <a
-              href={cutoutUrl ?? variant.imageUrl}
-              download={cutoutUrl ? "sprite-cutout.png" : "sprite.png"}
+              href={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
+              download={stretchedUrl ? `sprite-${SPRITE_W}x${SPRITE_H}.png` : cutoutUrl ? "sprite-cutout.png" : "sprite.png"}
               className="inline-flex items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
             >
               Download cutout PNG
