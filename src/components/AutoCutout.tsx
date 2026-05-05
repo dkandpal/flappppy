@@ -284,13 +284,13 @@ function simplify(points: Point[], epsilon: number): Point[] {
   return simplified;
 }
 
-export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor }: Props) {
+export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor, defaultTolerance = 10, defaultPadding = 8, autoRun = false, onCutoutReady }: Props) {
   const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [tolerance, setTolerance] = useState(10); // 0-50; bg if rgb > 255-tolerance
-  const [padding, setPadding] = useState(8);
+  const [tolerance, setTolerance] = useState(defaultTolerance); // 0-50; bg if rgb > 255-tolerance
+  const [padding, setPadding] = useState(defaultPadding);
   const [contour, setContour] = useState<Point[]>([]);
   const [bbox, setBbox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
