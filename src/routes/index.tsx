@@ -310,6 +310,7 @@ function VariantCard({
   filename: string;
 }) {
   const [pixelUrl, setPixelUrl] = useState<string | null>(null);
+  const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
   const [pixelError, setPixelError] = useState<string | null>(null);
   const lastSrc = useRef<string | null>(null);
 
@@ -317,10 +318,16 @@ function VariantCard({
     if (!variant.imageUrl || lastSrc.current === variant.imageUrl) return;
     lastSrc.current = variant.imageUrl;
     setPixelUrl(null);
+    setDims(null);
     setPixelError(null);
-    downscaleTo17x12(variant.imageUrl)
-      .then(setPixelUrl)
-      .catch((e) => setPixelError(e.message));
+    cropTo17x12(variant.imageUrl)
+      .then(({ url, w, h }) => {
+        setPixelUrl(url);
+        setDims({ w, h });
+      })
+      .catch((e: unknown) =>
+        setPixelError(e instanceof Error ? e.message : "Crop failed"),
+      );
   }, [variant.imageUrl]);
 
   return (
@@ -335,19 +342,17 @@ function VariantCard({
           {pixelUrl ? (
             <img
               src={pixelUrl}
-              alt={`${title} sprite (17x12)`}
-              width={TARGET_W * DISPLAY_SCALE}
-              height={TARGET_H * DISPLAY_SCALE}
-              style={{ imageRendering: "pixelated" }}
+              alt={`${title} sprite (17:12)`}
+              className="max-h-[360px] w-auto"
             />
           ) : pixelError ? (
             <p className="text-xs text-destructive">{pixelError}</p>
           ) : (
-            <p className="text-xs text-muted-foreground">Downscaling to 17×12…</p>
+            <p className="text-xs text-muted-foreground">Cropping to 17:12…</p>
           )}
         </div>
         <div className="border-t border-border bg-muted/30 px-4 py-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
-          True size: 17 × 12 px (shown {DISPLAY_SCALE}× scaled)
+          17 : 12 aspect ratio{dims ? ` — ${dims.w} × ${dims.h} px` : ""}
         </div>
       </Card>
 
