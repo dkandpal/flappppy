@@ -4,7 +4,7 @@ import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/")({
@@ -37,7 +37,6 @@ function Index() {
   const [mode, setMode] = useState<"text" | "image">("text");
   const [input, setInput] = useState("");
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
-  const [isHuman, setIsHuman] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -69,8 +68,8 @@ function Index() {
       setStep(2);
       const payload =
         mode === "image"
-          ? { referenceImage: referenceImage!, isHuman }
-          : { input: input.trim(), isHuman };
+          ? { referenceImage: referenceImage! }
+          : { input: input.trim() };
       const res = await generateSprite({ data: payload });
       setStep(3);
       setResult(res);
@@ -181,18 +180,6 @@ function Index() {
                 )}
               </div>
             )}
-
-            <div className="flex items-center justify-between rounded-md border border-border p-3">
-              <div>
-                <Label htmlFor="human" className="cursor-pointer">
-                  Human subject
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Toggle for head-and-shoulders portrait framing
-                </p>
-              </div>
-              <Switch id="human" checked={isHuman} onCheckedChange={setIsHuman} disabled={loading} />
-            </div>
 
             <Button
               type="submit"
