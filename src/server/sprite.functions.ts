@@ -108,7 +108,7 @@ STYLE:
 - Minimal shading; no gradients
 
 FRAMING:
-- Design as a 17 × 12 pixel-art sprite (rendered on a 17×12 grid, upscaled to 510 × 360 px for visibility — each "pixel" is a crisp 30×30 block, no anti-aliasing)
+- Canvas: 424 × 331 px
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
@@ -160,7 +160,7 @@ STYLE:
 - High contrast and readability
 
 FRAMING:
-- Design as a 17 × 12 pixel-art sprite (rendered on a 17×12 grid, upscaled to 510 × 360 px for visibility — each "pixel" is a crisp 30×30 block, no anti-aliasing)
+- Canvas: 424 × 331 px
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
@@ -311,7 +311,7 @@ STYLE:
 - Minimal shading; no gradients
 
 FRAMING:
-- Design as a 17 × 12 pixel-art sprite (rendered on a 17×12 grid, upscaled to 510 × 360 px for visibility — each "pixel" is a crisp 30×30 block, no anti-aliasing)
+- Canvas: 424 × 331 px
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
@@ -354,7 +354,7 @@ STYLE:
 - High contrast and readability
 
 FRAMING:
-- Design as a 17 × 12 pixel-art sprite (rendered on a 17×12 grid, upscaled to 510 × 360 px for visibility — each "pixel" is a crisp 30×30 block, no anti-aliasing)
+- Canvas: 424 × 331 px
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge

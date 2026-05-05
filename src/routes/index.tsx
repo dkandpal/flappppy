@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -266,38 +266,6 @@ function Index() {
   );
 }
 
-const RATIO_W = 17;
-const RATIO_H = 12;
-
-async function cropTo17x12(srcUrl: string): Promise<{ url: string; w: number; h: number }> {
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = srcUrl;
-  });
-  const targetRatio = RATIO_W / RATIO_H;
-  const srcRatio = img.width / img.height;
-  let cw = img.width;
-  let ch = img.height;
-  if (srcRatio > targetRatio) {
-    // too wide -> crop sides
-    cw = Math.round(img.height * targetRatio);
-  } else {
-    // too tall -> crop top/bottom
-    ch = Math.round(img.width / targetRatio);
-  }
-  const sx = Math.floor((img.width - cw) / 2);
-  const sy = Math.floor((img.height - ch) / 2);
-  const canvas = document.createElement("canvas");
-  canvas.width = cw;
-  canvas.height = ch;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
-  return { url: canvas.toDataURL("image/png"), w: cw, h: ch };
-}
-
 function VariantCard({
   title,
   subtitle,
@@ -309,27 +277,6 @@ function VariantCard({
   variant: Variant;
   filename: string;
 }) {
-  const [pixelUrl, setPixelUrl] = useState<string | null>(null);
-  const [dims, setDims] = useState<{ w: number; h: number } | null>(null);
-  const [pixelError, setPixelError] = useState<string | null>(null);
-  const lastSrc = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!variant.imageUrl || lastSrc.current === variant.imageUrl) return;
-    lastSrc.current = variant.imageUrl;
-    setPixelUrl(null);
-    setDims(null);
-    setPixelError(null);
-    cropTo17x12(variant.imageUrl)
-      .then(({ url, w, h }) => {
-        setPixelUrl(url);
-        setDims({ w, h });
-      })
-      .catch((e: unknown) =>
-        setPixelError(e instanceof Error ? e.message : "Crop failed"),
-      );
-  }, [variant.imageUrl]);
-
   return (
     <div className="space-y-4">
       <div>
@@ -339,20 +286,11 @@ function VariantCard({
 
       <Card className="overflow-hidden p-0">
         <div className="flex items-center justify-center bg-white p-4">
-          {pixelUrl ? (
-            <img
-              src={pixelUrl}
-              alt={`${title} sprite (17:12)`}
-              className="max-h-[360px] w-auto"
-            />
-          ) : pixelError ? (
-            <p className="text-xs text-destructive">{pixelError}</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">Cropping to 17:12…</p>
-          )}
-        </div>
-        <div className="border-t border-border bg-muted/30 px-4 py-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
-          17 : 12 aspect ratio{dims ? ` — ${dims.w} × ${dims.h} px` : ""}
+          <img
+            src={variant.imageUrl}
+            alt={`${title} sprite`}
+            className="max-h-[360px] w-auto"
+          />
         </div>
       </Card>
 
@@ -381,15 +319,13 @@ function VariantCard({
         </pre>
       </Card>
 
-      {pixelUrl && (
-        <a
-          href={pixelUrl}
-          download={filename.replace(/\.png$/, "-17x12.png")}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Download 17×12 PNG
-        </a>
-      )}
+      <a
+        href={variant.imageUrl}
+        download={filename}
+        className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        Download PNG
+      </a>
     </div>
   );
 }
