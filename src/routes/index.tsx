@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { Card } from "@/components/ui/card";
+import { AutoCutout } from "@/components/AutoCutout";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -313,6 +314,8 @@ function VariantCard({
       >
         Download PNG
       </a>
+
+      <AutoCutout imageUrl={variant.imageUrl} filename={filename.replace(/\.png$/, "-cutout.png")} />
     </div>
   );
 }
