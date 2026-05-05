@@ -108,7 +108,7 @@ STYLE:
 - Minimal shading; no gradients
 
 FRAMING:
-- Canvas: 424 × 331 px
+- Canvas: 510 × 360 px (17:12 aspect ratio)
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
@@ -160,7 +160,7 @@ STYLE:
 - High contrast and readability
 
 FRAMING:
-- Canvas: 424 × 331 px
+- Canvas: 510 × 360 px (17:12 aspect ratio)
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
@@ -311,7 +311,7 @@ STYLE:
 - Minimal shading; no gradients
 
 FRAMING:
-- Canvas: 424 × 331 px
+- Canvas: 510 × 360 px (17:12 aspect ratio)
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
@@ -354,7 +354,7 @@ STYLE:
 - High contrast and readability
 
 FRAMING:
-- Canvas: 424 × 331 px
+- Canvas: 510 × 360 px (17:12 aspect ratio)
 - Pure white background #FFFFFF
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
