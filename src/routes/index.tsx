@@ -285,11 +285,11 @@ function VariantCard({
       </div>
 
       <Card className="overflow-hidden p-0">
-        <div className="flex items-center justify-center bg-white p-4">
+        <div className="bg-white" style={{ aspectRatio: "17 / 12" }}>
           <img
             src={variant.imageUrl}
             alt={`${title} sprite`}
-            className="max-h-[360px] w-auto"
+            className="h-full w-full object-contain"
           />
         </div>
       </Card>
