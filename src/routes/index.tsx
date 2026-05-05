@@ -452,11 +452,32 @@ function StepThree({
   onBack: () => void;
   onStartOver: () => void;
 }) {
+  const SPRITE_W = 424;
+  const SPRITE_H = 331;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);
+  const [stretchedUrl, setStretchedUrl] = useState<string | null>(null);
 
-  // Reset cutout when variant changes
-  // (variant.imageUrl change re-mounts AutoCutout via key below)
+  // Stretch cutout to required sprite-sheet dimensions
+  useEffect(() => {
+    if (!cutoutUrl) {
+      setStretchedUrl(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = SPRITE_W;
+      canvas.height = SPRITE_H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, SPRITE_W, SPRITE_H);
+      setStretchedUrl(canvas.toDataURL("image/png"));
+    };
+    img.src = cutoutUrl;
+  }, [cutoutUrl]);
 
   const checkerStyle: React.CSSProperties = {
     backgroundImage:
