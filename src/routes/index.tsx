@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -452,11 +452,32 @@ function StepThree({
   onBack: () => void;
   onStartOver: () => void;
 }) {
+  const SPRITE_W = 424;
+  const SPRITE_H = 331;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);
+  const [stretchedUrl, setStretchedUrl] = useState<string | null>(null);
 
-  // Reset cutout when variant changes
-  // (variant.imageUrl change re-mounts AutoCutout via key below)
+  // Stretch cutout to required sprite-sheet dimensions
+  useEffect(() => {
+    if (!cutoutUrl) {
+      setStretchedUrl(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = SPRITE_W;
+      canvas.height = SPRITE_H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, SPRITE_W, SPRITE_H);
+      setStretchedUrl(canvas.toDataURL("image/png"));
+    };
+    img.src = cutoutUrl;
+  }, [cutoutUrl]);
 
   const checkerStyle: React.CSSProperties = {
     backgroundImage:
@@ -481,17 +502,23 @@ function StepThree({
       <Card className="overflow-hidden p-0">
         <div
           className="mx-auto flex items-center justify-center"
-          style={{ ...checkerStyle, aspectRatio: "17 / 12", maxWidth: 600 }}
+          style={{ ...checkerStyle, width: SPRITE_W, height: SPRITE_H }}
         >
           <img
-            src={cutoutUrl ?? variant.imageUrl}
+            src={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
             alt="Selected sprite"
-            className="max-h-full max-w-full object-contain"
+            width={SPRITE_W}
+            height={SPRITE_H}
+            style={{ width: SPRITE_W, height: SPRITE_H, display: "block" }}
           />
         </div>
       </Card>
       <p className="text-center text-xs text-muted-foreground">
-        {cutoutUrl ? "Background removed automatically" : "Removing background…"}
+        {stretchedUrl
+          ? `Stretched to ${SPRITE_W}×${SPRITE_H} for sprite sheet`
+          : cutoutUrl
+            ? "Resizing…"
+            : "Removing background…"}
       </p>
 
       {/* Hidden auto-cutout to drive the preview above */}
@@ -536,8 +563,8 @@ function StepThree({
         <div className="space-y-4">
           <div className="flex justify-center">
             <a
-              href={cutoutUrl ?? variant.imageUrl}
-              download={cutoutUrl ? "sprite-cutout.png" : "sprite.png"}
+              href={stretchedUrl ?? cutoutUrl ?? variant.imageUrl}
+              download={stretchedUrl ? `sprite-${SPRITE_W}x${SPRITE_H}.png` : cutoutUrl ? "sprite-cutout.png" : "sprite.png"}
               className="inline-flex items-center justify-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
             >
               Download cutout PNG
