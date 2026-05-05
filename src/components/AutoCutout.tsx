@@ -383,6 +383,7 @@ export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor, 
       cctx.putImageData(cropped, 0, 0);
       const dataUrl = cutCanvas.toDataURL("image/png");
       setCutoutDataUrl(dataUrl);
+      onCutoutReady?.(dataUrl);
 
       // Render preview
       const preview = previewCanvasRef.current;
