@@ -69,20 +69,7 @@ Return a single, dense sentence describing:
 
 No explanations, no labels.`;
 
-function buildImagePromptB(descriptor: string, isHuman: boolean) {
-  const subjectRule = isHuman
-    ? `HUMAN SUBJECT RULE:
-- Generate head and upper shoulders only
-- Face should occupy 75–85% of canvas height
-- Strongly emphasize facial proportions (jaw, nose, eyes, hair silhouette)
-- Allow asymmetry and caricature distortion
-- Expression should reinforce personality
-- Do not generate a full body`
-    : `NON-HUMAN SUBJECT RULE:
-- Use a compact, side-facing sprite suitable for a Flappy-style game
-- Emphasize silhouette and iconic shape language
-- Fill 90–95% of the canvas`;
-
+function buildImagePromptB(descriptor: string) {
   return `Create a satirical 2D arcade sprite based on this sanitized character archetype:
 
 "${descriptor}"
@@ -114,24 +101,11 @@ FRAMING:
 - Subject should touch an invisible bounding box inset 10 px from each edge
 - No cropping
 - No border, no watermark, no text
-
-${subjectRule}`;
+- Use a compact, side-facing sprite suitable for a Flappy-style game
+- Emphasize silhouette and iconic shape language`;
 }
 
-function buildImagePromptC(descriptor: string, isHuman: boolean) {
-  const subjectRule = isHuman
-    ? `HUMAN SUBJECT RULE:
-- Head and upper shoulders only
-- Face occupies 80–90% of canvas height
-- Exaggerate facial proportions heavily (jaw size, nose shape, eye spacing, hair volume)
-- Allow strong distortion if it improves recognizability
-- Expression should be bold and personality-driven`
-    : `NON-HUMAN SUBJECT RULE:
-- Side-facing sprite suitable for Flappy-style gameplay
-- Strong silhouette exaggeration
-- Emphasize iconic shape language over detail
-- Fill 90–95% of canvas`;
-
+function buildImagePromptC(descriptor: string) {
   return `Create a highly exaggerated satirical 2D arcade sprite based on this character archetype:
 
 "${descriptor}"
@@ -166,8 +140,8 @@ FRAMING:
 - Subject should touch an invisible bounding box inset 10 px from each edge
 - No cropping
 - No border, watermark, or text
-
-${subjectRule}`;
+- Side-facing sprite suitable for Flappy-style gameplay
+- Strong silhouette exaggeration; emphasize iconic shape language`;
 }
 
 async function sanitize(apiKey: string, system: string, input: string): Promise<string> {
@@ -265,29 +239,16 @@ async function generateImage(
 async function runVariant(
   apiKey: string,
   system: string,
-  buildPrompt: (d: string, h: boolean) => string,
+  buildPrompt: (d: string) => string,
   input: string,
-  isHuman: boolean,
 ) {
   const descriptor = await sanitize(apiKey, system, input);
-  const imagePrompt = buildPrompt(descriptor, isHuman);
+  const imagePrompt = buildPrompt(descriptor);
   const imageUrl = await generateImage(apiKey, imagePrompt);
   return { sanitizerPrompt: system, descriptor, imagePrompt, imageUrl };
 }
 
-function buildImageRedrawPromptB(isHuman: boolean) {
-  const subjectRule = isHuman
-    ? `HUMAN SUBJECT RULE:
-- Generate head and upper shoulders only
-- Face should occupy 75–85% of canvas height
-- Strongly emphasize facial proportions (jaw, nose, eyes, hair silhouette)
-- Allow asymmetry and caricature distortion
-- Do not generate a full body`
-    : `NON-HUMAN SUBJECT RULE:
-- Use a compact, side-facing sprite suitable for a Flappy-style game
-- Emphasize silhouette and iconic shape language
-- Fill 90–95% of the canvas`;
-
+function buildImageRedrawPromptB() {
   return `Redraw the subject in the attached reference image as a satirical 2D arcade game sprite.
 
 GOAL:
@@ -316,22 +277,11 @@ FRAMING:
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
 - No cropping, border, watermark, or text
-
-${subjectRule}`;
+- Use a compact, side-facing sprite suitable for a Flappy-style game
+- Emphasize silhouette and iconic shape language`;
 }
 
-function buildImageRedrawPromptC(isHuman: boolean) {
-  const subjectRule = isHuman
-    ? `HUMAN SUBJECT RULE:
-- Head and upper shoulders only
-- Face occupies 80–90% of canvas height
-- Exaggerate facial proportions heavily (jaw size, nose shape, eye spacing, hair volume)
-- Allow strong distortion if it improves recognizability`
-    : `NON-HUMAN SUBJECT RULE:
-- Side-facing sprite suitable for Flappy-style gameplay
-- Strong silhouette exaggeration
-- Fill 90–95% of canvas`;
-
+function buildImageRedrawPromptC() {
   return `Redraw the subject in the attached reference image as a HIGHLY exaggerated satirical 2D arcade sprite.
 
 GOAL:
@@ -359,8 +309,8 @@ FRAMING:
 - Subject fills 90–95% of the canvas
 - Subject should touch an invisible bounding box inset 10 px from each edge
 - No cropping, border, watermark, or text
-
-${subjectRule}`;
+- Side-facing sprite suitable for Flappy-style gameplay
+- Strong silhouette exaggeration`;
 }
 
 async function runImageVariant(
@@ -382,7 +332,6 @@ export const generateSprite = createServerFn({ method: "POST" })
     z.object({
       input: z.string().trim().max(200).optional(),
       referenceImage: z.string().startsWith("data:image/").optional(),
-      isHuman: z.boolean().default(false),
     })
       .refine((d) => !!d.input || !!d.referenceImage, {
         message: "Provide either text input or a reference image",
@@ -394,8 +343,8 @@ export const generateSprite = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
     if (data.referenceImage) {
-      const promptB = buildImageRedrawPromptB(data.isHuman);
-      const promptC = buildImageRedrawPromptC(data.isHuman);
+      const promptB = buildImageRedrawPromptB();
+      const promptC = buildImageRedrawPromptC();
       const [optionB, optionC] = await Promise.all([
         runImageVariant(apiKey, promptB, data.referenceImage),
         runImageVariant(apiKey, promptC, data.referenceImage),
@@ -404,10 +353,9 @@ export const generateSprite = createServerFn({ method: "POST" })
     }
 
     const [optionB, optionC] = await Promise.all([
-      runVariant(apiKey, SANITIZE_SYSTEM_B, buildImagePromptB, data.input!, data.isHuman),
-      runVariant(apiKey, SANITIZE_SYSTEM_C, buildImagePromptC, data.input!, data.isHuman),
+      runVariant(apiKey, SANITIZE_SYSTEM_B, buildImagePromptB, data.input!),
+      runVariant(apiKey, SANITIZE_SYSTEM_C, buildImagePromptC, data.input!),
     ]);
 
     return { optionB, optionC };
   });
-
