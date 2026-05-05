@@ -319,6 +319,14 @@ export function AutoCutout({ imageUrl, filename = "cutout.png", onCopyToEditor, 
     img.src = imageUrl;
   }, [imageUrl]);
 
+  // Auto-run detection once image is loaded (when autoRun=true)
+  useEffect(() => {
+    if (autoRun && imgSize) {
+      runDetection();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun, imgSize, tolerance, padding]);
+
   function runDetection() {
     const src = sourceCanvasRef.current;
     if (!src || !imgSize) return;
