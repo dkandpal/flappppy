@@ -100,15 +100,15 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-6 py-12">
-        <header className="mb-8">
-          <p className="mb-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Sprite Forge
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Make your game sprite in 3 steps
+      <TopBar />
+      <div className="mx-auto max-w-3xl px-6 pb-16 pt-6">
+        <StepIndicator step={step} />
+
+        <header className="mb-8 mt-10 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Make your game sprite
+            <br /> in 3 steps
           </h1>
-          <StepIndicator step={step} />
         </header>
 
         {error && (
