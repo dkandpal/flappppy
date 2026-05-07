@@ -514,9 +514,41 @@ function StepThree({
 }) {
   const SPRITE_W = 424;
   const SPRITE_H = 331;
+  const SHEET_W = 1720;
+  const SHEET_H = 2690;
+  const BIRD_X = 1059;
+  const BIRD_Y = 543;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);
   const [stretchedUrl, setStretchedUrl] = useState<string | null>(null);
+  const [mergedSheetUrl, setMergedSheetUrl] = useState<string | null>(null);
+
+  // Merge stretched sprite into the base flappy sprite sheet at bird.png slot
+  useEffect(() => {
+    if (!stretchedUrl) {
+      setMergedSheetUrl(null);
+      return;
+    }
+    const sheet = new Image();
+    sheet.crossOrigin = "anonymous";
+    sheet.onload = () => {
+      const sprite = new Image();
+      sprite.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = SHEET_W;
+        canvas.height = SHEET_H;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(sheet, 0, 0, SHEET_W, SHEET_H);
+        // Clear existing bird region then draw new sprite
+        ctx.clearRect(BIRD_X, BIRD_Y, SPRITE_W, SPRITE_H);
+        ctx.drawImage(sprite, BIRD_X, BIRD_Y, SPRITE_W, SPRITE_H);
+        setMergedSheetUrl(canvas.toDataURL("image/png"));
+      };
+      sprite.src = stretchedUrl;
+    };
+    sheet.src = "/flappy_1.png";
+  }, [stretchedUrl]);
 
   // Stretch cutout to required sprite-sheet dimensions
   useEffect(() => {
@@ -607,6 +639,41 @@ function StepThree({
             ? "Resizing…"
             : "Removing background…"}
       </p>
+
+      <div className="space-y-2">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Sprite sheet
+        </p>
+        <Card className="overflow-hidden p-2">
+          <div style={checkerStyle} className="w-full">
+            {mergedSheetUrl ? (
+              <img
+                src={mergedSheetUrl}
+                alt="Merged sprite sheet with your character"
+                className="block h-auto w-full"
+              />
+            ) : (
+              <div
+                className="flex w-full items-center justify-center text-xs text-muted-foreground"
+                style={{ aspectRatio: `${SHEET_W} / ${SHEET_H}` }}
+              >
+                Building sprite sheet…
+              </div>
+            )}
+          </div>
+        </Card>
+        {mergedSheetUrl && (
+          <div className="flex justify-center">
+            <a
+              href={mergedSheetUrl}
+              download="flappy-spritesheet.png"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Download sprite sheet PNG
+            </a>
+          </div>
+        )}
+      </div>
 
       {/* Hidden auto-cutout to drive the preview above */}
       <div className="sr-only" aria-hidden>
