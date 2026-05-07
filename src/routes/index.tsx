@@ -37,7 +37,7 @@ type VariantKey = "B" | "C";
 
 function Index() {
   const [step, setStep] = useState<Step>(1);
-  const [mode, setMode] = useState<"text" | "image">("text");
+  const [mode, setMode] = useState<"text" | "image">("image");
   const [input, setInput] = useState("");
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -251,18 +251,6 @@ function StepOne({
         <div className="flex gap-1 rounded-lg bg-background/60 p-1">
           <button
             type="button"
-            onClick={() => setMode("text")}
-            disabled={loading}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-              mode === "text"
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Text Prompt
-          </button>
-          <button
-            type="button"
             onClick={() => setMode("image")}
             disabled={loading}
             className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -272,6 +260,18 @@ function StepOne({
             }`}
           >
             Upload Image
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("text")}
+            disabled={loading}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              mode === "text"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Text Prompt
           </button>
         </div>
 
