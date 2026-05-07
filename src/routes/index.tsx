@@ -37,7 +37,7 @@ type VariantKey = "B" | "C";
 
 function Index() {
   const [step, setStep] = useState<Step>(1);
-  const [mode, setMode] = useState<"text" | "image">("text");
+  const [mode, setMode] = useState<"text" | "image">("image");
   const [input, setInput] = useState("");
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
