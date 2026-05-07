@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { AutoCutout } from "@/components/AutoCutout";
+import { Menu, UploadCloud, Info } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
