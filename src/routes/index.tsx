@@ -640,6 +640,41 @@ function StepThree({
             : "Removing background…"}
       </p>
 
+      <div className="space-y-2">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Sprite sheet
+        </p>
+        <Card className="overflow-hidden p-2">
+          <div style={checkerStyle} className="w-full">
+            {mergedSheetUrl ? (
+              <img
+                src={mergedSheetUrl}
+                alt="Merged sprite sheet with your character"
+                className="block h-auto w-full"
+              />
+            ) : (
+              <div
+                className="flex w-full items-center justify-center text-xs text-muted-foreground"
+                style={{ aspectRatio: `${SHEET_W} / ${SHEET_H}` }}
+              >
+                Building sprite sheet…
+              </div>
+            )}
+          </div>
+        </Card>
+        {mergedSheetUrl && (
+          <div className="flex justify-center">
+            <a
+              href={mergedSheetUrl}
+              download="flappy-spritesheet.png"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Download sprite sheet PNG
+            </a>
+          </div>
+        )}
+      </div>
+
       {/* Hidden auto-cutout to drive the preview above */}
       <div className="sr-only" aria-hidden>
         <AutoCutout
