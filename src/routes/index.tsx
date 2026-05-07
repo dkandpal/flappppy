@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { AutoCutout } from "@/components/AutoCutout";
+import { Menu, UploadCloud, Info } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -98,15 +100,15 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-6 py-12">
-        <header className="mb-8">
-          <p className="mb-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Sprite Forge
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Make your game sprite in 3 steps
+      <TopBar />
+      <div className="mx-auto max-w-3xl px-6 pb-16 pt-6">
+        <StepIndicator step={step} />
+
+        <header className="mb-8 mt-10 text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Make your game sprite
+            <br /> in 3 steps
           </h1>
-          <StepIndicator step={step} />
         </header>
 
         {error && (
@@ -152,37 +154,63 @@ function Index() {
   );
 }
 
+function TopBar() {
+  return (
+    <header className="sticky top-0 z-10 border-b border-border/40 bg-background/80 backdrop-blur">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Open menu"
+            className="text-brand hover:opacity-80"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="text-lg font-bold tracking-tight text-brand">
+            Sprite Forge
+          </span>
+        </div>
+        <div className="h-9 w-9 overflow-hidden rounded-full border border-border bg-muted">
+          <div
+            aria-hidden
+            className="h-full w-full bg-gradient-to-br from-brand/40 to-brand/10"
+          />
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function StepIndicator({ step }: { step: Step }) {
   const labels = ["Describe", "Choose", "Confirm"];
   return (
-    <div className="mt-5 flex items-center gap-2 text-xs">
+    <div className="mx-auto flex max-w-md items-start justify-between">
       {labels.map((label, i) => {
         const n = (i + 1) as Step;
         const active = step === n;
         const done = step > n;
         return (
-          <div key={label} className="flex items-center gap-2">
-            <div
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : done
-                    ? "bg-primary/30 text-foreground"
-                    : "bg-muted text-muted-foreground"
-              }`}
-            >
-              {n}
+          <div key={label} className="flex flex-1 flex-col items-center">
+            <div className="flex w-full items-center">
+              <div className={`h-px flex-1 ${i === 0 ? "opacity-0" : done || active ? "bg-brand/60" : "bg-border"}`} />
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold ${
+                  active
+                    ? "bg-brand text-primary-foreground shadow-[0_0_24px_-4px_var(--brand)]"
+                    : done
+                      ? "bg-brand/30 text-foreground"
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {n}
+              </div>
+              <div className={`h-px flex-1 ${i === labels.length - 1 ? "opacity-0" : done ? "bg-brand/60" : "bg-border"}`} />
             </div>
             <span
-              className={
-                active ? "font-medium text-foreground" : "text-muted-foreground"
-              }
+              className={`mt-2 text-xs ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}
             >
               {label}
             </span>
-            {i < labels.length - 1 && (
-              <div className="mx-2 h-px w-8 bg-border" />
-            )}
           </div>
         );
       })}
@@ -211,68 +239,100 @@ function StepOne({
   handleGenerate: (e: React.FormEvent) => void;
   loading: boolean;
 }) {
-  return (
-    <Card className="p-6">
-      <form onSubmit={handleGenerate} className="space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold">Describe your character</h2>
-          <p className="text-sm text-muted-foreground">
-            Type an idea or upload a reference image. Press Generate to continue.
-          </p>
-        </div>
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-        <div className="flex gap-2 rounded-md border border-border p-1">
+  return (
+    <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
+      <form onSubmit={handleGenerate} className="space-y-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Describe your character
+        </p>
+
+        <div className="flex gap-1 rounded-lg bg-background/60 p-1">
           <button
             type="button"
             onClick={() => setMode("text")}
             disabled={loading}
-            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               mode === "text"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Text prompt
+            Text Prompt
           </button>
           <button
             type="button"
             onClick={() => setMode("image")}
             disabled={loading}
-            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
               mode === "image"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Upload image
+            Upload Image
           </button>
         </div>
 
         {mode === "text" ? (
           <div className="space-y-2">
-            <Label htmlFor="input">Your idea</Label>
-            <Input
-              id="input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="e.g. a brave knight, a fire-breathing fox, a cyber ninja..."
-              maxLength={200}
-              disabled={loading}
-              autoFocus
-            />
+            <Label
+              htmlFor="input"
+              className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+            >
+              Prompt specification
+            </Label>
+            <div className="relative">
+              <Textarea
+                id="input"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type an idea... e.g. A cybernetic rogue with glowing orange visor and weathered tactical gear, 2D pixel art style."
+                maxLength={400}
+                rows={5}
+                disabled={loading}
+                autoFocus
+                className="resize-none bg-background/60 pr-10 placeholder:text-muted-foreground/70"
+              />
+              <Info className="pointer-events-none absolute bottom-3 right-3 h-4 w-4 text-muted-foreground/60" />
+            </div>
           </div>
         ) : (
           <div className="space-y-2">
-            <Label htmlFor="file">Reference image</Label>
-            <Input
+            <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Reference image
+            </Label>
+            <input
+              ref={fileInputRef}
               id="file"
               type="file"
               accept="image/png,image/jpeg,image/webp"
               onChange={handleFileChange}
               disabled={loading}
+              className="hidden"
             />
-            {referenceImage && (
-              <div className="mt-2 flex items-center gap-3 rounded-md border border-border p-3">
+            {!referenceImage ? (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+                className="flex w-full flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-background/30 px-6 py-12 text-center transition-colors hover:border-brand/60 hover:bg-background/50"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-card">
+                  <UploadCloud className="h-7 w-7 text-brand" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Click or drag image to upload
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    PNG, JPG up to 10MB
+                  </p>
+                </div>
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-background/30 p-3">
                 <img
                   src={referenceImage}
                   alt="Reference"
@@ -299,7 +359,7 @@ function StepOne({
           disabled={
             loading || (mode === "text" ? !input.trim() : !referenceImage)
           }
-          className="w-full"
+          className="w-full bg-brand text-primary-foreground hover:bg-brand/90"
         >
           {loading ? "Generating your sprites…" : "Generate"}
         </Button>

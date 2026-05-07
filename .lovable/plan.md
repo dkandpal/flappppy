@@ -1,47 +1,52 @@
-# Plan: Three Sprite Variants in Step 3
+## Redesign Step 1 — Dark "Sprite Forge" theme
 
-Replace the single stretched-sprite preview in `StepThree` with a row of three labeled previews, each at the required 424×331 sprite-sheet size:
+Match the uploaded mockups: dark navy background, cyan accent brand, top app bar, restyled stepper, bold hero, and a refreshed "Describe your character" card with a textarea + cloud-icon upload zone.
 
-1. **Idle** — the stretched cutout as-is (current behavior).
-2. **Hit** — same sprite with a giant red "X" overlaid on top of the avatar (representing being hit/dead).
-3. **Jump** — same sprite with small spring graphics overlaid along the bottom edge (representing jumping).
+### Visual direction
+- **Theme**: dark mode by default. Background near-black navy, elevated cards a touch lighter, subtle borders.
+- **Accent**: bright cyan (`oklch` token) for the brand wordmark, the active step pill, and primary affordances.
+- **Typography**: large, bold hero ("Make your game sprite in 3 steps"), small uppercased section labels with wide tracking ("DESCRIBE YOUR CHARACTER", "REFERENCE IMAGE", "PROMPT SPECIFICATION").
 
-The overlays are conceptual "layers" applied uniformly to every avatar — the same X / spring artwork regardless of which sprite was chosen.
+### Layout changes (`src/routes/index.tsx` + `src/styles.css`)
 
-## UI Changes (`src/routes/index.tsx` → `StepThree`)
+1. **Top app bar** (new, above header)
+   - Left: hamburger icon + cyan "Sprite Forge" wordmark.
+   - Right: circular avatar placeholder.
+   - Sticky, transparent over page background.
 
-- Keep all existing logic for cutout + stretching (`cutoutUrl`, `stretchedUrl`, the hidden `AutoCutout` driver, and the 424×331 stretch effect). No changes to the cutout pipeline.
-- Replace the single preview `Card` with a responsive row of three `Card`s (stacked on mobile, side-by-side on md+). Each card contains:
-  - A 424×331 checkerboard container showing the sprite.
-  - A small caption beneath: "Idle", "Hit", "Jump".
-- All three cards use the same `stretchedUrl` (falling back to `cutoutUrl`, then `variant.imageUrl`) as the base layer.
-- Overlays are absolutely positioned inside the card on top of the base `<img>`.
+2. **Stepper redesign**
+   - Three rounded-square chips (1 / 2 / 3) connected by a thin divider line.
+   - Active step: filled cyan with dark number; completed: muted cyan; upcoming: dark gray.
+   - Label ("Describe / Choose / Confirm") sits *below* each chip, centered.
 
-```text
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│  sprite  │  │ sprite+X │  │ sprite+⚙⚙│
-│  (Idle)  │  │  (Hit)   │  │  (Jump)  │
-└──────────┘  └──────────┘  └──────────┘
-```
+3. **Hero**
+   - Centered, two-line bold heading. Remove the small "Sprite Forge" eyebrow (now in app bar).
 
-- Container width on the page expands; cards may scale down visually on smaller viewports via `max-width: 100%` while preserving aspect ratio (`aspect-ratio: 424 / 331`). Native pixel size of the underlying canvas/image stays 424×331 for downloads.
+4. **Step 1 card refresh**
+   - Card uses elevated dark surface with soft border.
+   - Section label "DESCRIBE YOUR CHARACTER" in uppercase tracking.
+   - Toggle (Text Prompt / Upload Image): segmented pill, selected = lighter dark fill with white text, unselected = transparent muted.
+   - **Text mode**: replace single-line `Input` with a multi-line textarea labeled "PROMPT SPECIFICATION", placeholder "Type an idea... e.g. A cybernetic rogue with glowing orange visor and weathered tactical gear, 2D pixel art style." Small info (ⓘ) icon bottom-right inside the field.
+   - **Upload mode**: large dashed dropzone with centered cyan cloud-upload icon, "Click or drag image to upload", subtext "PNG, JPG up to 10MB". Clicking opens the file picker (hidden `<input type="file">`).
+   - Generate button stays full-width below.
 
-## Overlay Implementation
+5. **Steps 2 & 3** keep their current functionality but inherit the new dark tokens automatically (cards, borders, text). No structural changes.
 
-Two new lightweight presentational subcomponents inside `index.tsx`:
+### Design tokens (`src/styles.css`)
+- Set `:root` to dark values (or force `.dark` on `<html>`):
+  - `--background`: deep navy (~`oklch(0.18 0.02 250)`)
+  - `--card`: slightly lighter navy
+  - `--border`: low-contrast cool gray
+  - `--primary`: cyan (~`oklch(0.82 0.15 200)`) with dark `--primary-foreground`
+  - `--muted-foreground`: cool gray
+- Add a `--brand` cyan token for the wordmark + active step.
 
-- `XOverlay` — an absolutely-positioned SVG that draws two thick diagonal strokes spanning the full 424×331 frame, in a bold red (e.g. `#dc2626`) with slight stroke opacity, `pointer-events: none`. Sized `100%/100%` so it scales with the card.
-- `SpringsOverlay` — an absolutely-positioned SVG anchored to the bottom of the frame, drawing 3–4 small coil/spring shapes (simple zig-zag or stacked-loop paths) evenly spaced along the bottom ~20% of the height. Neutral metallic gray (`#6b7280`) with darker outline. Also `pointer-events: none`.
+### Out of scope
+- No changes to sprite generation logic, server functions, or `AutoCutout`.
+- Existing Step 3 overlays (Idle / Hit) untouched.
 
-Both overlays are pure SVG inline in JSX — no new assets, no extra dependencies.
-
-## Advanced Tools Section
-
-- The existing "advanced tools" download link continues to download the plain stretched cutout (`stretchedUrl`). Overlay variants are display-only for now — no separate download buttons (can be added later if requested).
-- The existing manual `AutoCutout` editor remains unchanged.
-
-## Files to Edit
-
-- `src/routes/index.tsx` — modify `StepThree`; add `XOverlay` and `SpringsOverlay` components in the same file.
-
-No new dependencies, no server changes, no route changes.
+### Technical notes
+- Force dark theme by adding `class="dark"` on the root element in `__root.tsx` (or flipping `:root` tokens directly in `styles.css`).
+- Use `lucide-react` icons (`Menu`, `UploadCloud`, `Info`) — already available via shadcn.
+- Replace `Input` (text mode) with `Textarea` from `@/components/ui/textarea`.
+- Avatar: circular `<div>` with a placeholder image (or initials) — no auth wiring.
