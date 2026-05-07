@@ -518,6 +518,10 @@ function StepThree({
   const SHEET_H = 2690;
   const BIRD_X = 1059;
   const BIRD_Y = 543;
+  const CRASHED_X = 15;
+  const CRASHED_Y = 2384;
+  const CRASHED_W = 390;
+  const CRASHED_H = 291;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);
   const [stretchedUrl, setStretchedUrl] = useState<string | null>(null);
