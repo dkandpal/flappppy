@@ -514,9 +514,41 @@ function StepThree({
 }) {
   const SPRITE_W = 424;
   const SPRITE_H = 331;
+  const SHEET_W = 1720;
+  const SHEET_H = 2690;
+  const BIRD_X = 1059;
+  const BIRD_Y = 543;
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [cutoutUrl, setCutoutUrl] = useState<string | null>(null);
   const [stretchedUrl, setStretchedUrl] = useState<string | null>(null);
+  const [mergedSheetUrl, setMergedSheetUrl] = useState<string | null>(null);
+
+  // Merge stretched sprite into the base flappy sprite sheet at bird.png slot
+  useEffect(() => {
+    if (!stretchedUrl) {
+      setMergedSheetUrl(null);
+      return;
+    }
+    const sheet = new Image();
+    sheet.crossOrigin = "anonymous";
+    sheet.onload = () => {
+      const sprite = new Image();
+      sprite.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = SHEET_W;
+        canvas.height = SHEET_H;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(sheet, 0, 0, SHEET_W, SHEET_H);
+        // Clear existing bird region then draw new sprite
+        ctx.clearRect(BIRD_X, BIRD_Y, SPRITE_W, SPRITE_H);
+        ctx.drawImage(sprite, BIRD_X, BIRD_Y, SPRITE_W, SPRITE_H);
+        setMergedSheetUrl(canvas.toDataURL("image/png"));
+      };
+      sprite.src = stretchedUrl;
+    };
+    sheet.src = "/flappy_1.png";
+  }, [stretchedUrl]);
 
   // Stretch cutout to required sprite-sheet dimensions
   useEffect(() => {
