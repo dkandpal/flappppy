@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { generateSprite } from "@/server/sprite.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,7 +239,7 @@ function StepOne({
   handleGenerate: (e: React.FormEvent) => void;
   loading: boolean;
 }) {
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <Card className="border-border/60 bg-card/60 p-6 backdrop-blur">
