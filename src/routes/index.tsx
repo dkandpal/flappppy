@@ -544,9 +544,24 @@ function StepThree({
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
         ctx.drawImage(sheet, 0, 0, SHEET_W, SHEET_H);
-        // Clear existing bird region then draw new sprite
+        // Idle slot
         ctx.clearRect(BIRD_X, BIRD_Y, SPRITE_W, SPRITE_H);
         ctx.drawImage(sprite, BIRD_X, BIRD_Y, SPRITE_W, SPRITE_H);
+        // Crashed slot — sprite + red X overlay
+        ctx.clearRect(CRASHED_X, CRASHED_Y, CRASHED_W, CRASHED_H);
+        ctx.drawImage(sprite, CRASHED_X, CRASHED_Y, CRASHED_W, CRASHED_H);
+        ctx.save();
+        ctx.strokeStyle = "rgba(220, 38, 38, 0.85)";
+        ctx.lineWidth = 36;
+        ctx.lineCap = "round";
+        const pad = 40;
+        ctx.beginPath();
+        ctx.moveTo(CRASHED_X + pad, CRASHED_Y + pad);
+        ctx.lineTo(CRASHED_X + CRASHED_W - pad, CRASHED_Y + CRASHED_H - pad);
+        ctx.moveTo(CRASHED_X + CRASHED_W - pad, CRASHED_Y + pad);
+        ctx.lineTo(CRASHED_X + pad, CRASHED_Y + CRASHED_H - pad);
+        ctx.stroke();
+        ctx.restore();
         setMergedSheetUrl(canvas.toDataURL("image/png"));
       };
       sprite.src = stretchedUrl;
