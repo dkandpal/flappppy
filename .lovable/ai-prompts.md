@@ -126,8 +126,12 @@ FRAMING:
 - Subject should touch an invisible bounding box inset 10 px from each edge
 - No cropping
 - No border, no watermark, no text
-- Use a compact, side-facing sprite suitable for a Flappy-style game
+- Use a compact RIGHT-facing side-profile sprite suitable for a Flappy-style game
 - Emphasize silhouette and iconic shape language
+
+IMPORTANT:
+- The sprite should visually appear to be moving from LEFT → RIGHT across the screen.
+- Never face LEFT.
 ```
 
 ---
