@@ -144,8 +144,12 @@ FRAMING:
 - Subject should touch an invisible bounding box inset 10 px from each edge
 - No cropping
 - No border, watermark, or text
-- Side-facing sprite suitable for Flappy-style gameplay
-- Strong silhouette exaggeration; emphasize iconic shape language`;
+- RIGHT-facing side-profile sprite suitable for Flappy-style gameplay
+- Strong silhouette exaggeration; emphasize iconic shape language
+
+IMPORTANT:
+- The sprite should visually appear to be moving from LEFT → RIGHT across the screen.
+- Never face LEFT.`;
 }
 
 async function sanitize(apiKey: string, system: string, input: string): Promise<string> {
